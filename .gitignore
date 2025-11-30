@@ -1,0 +1,15 @@
+# Virtual environments
+venv/
+*/venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment files
+.env
+*.log
+
+# OS/system files
+.DS_Store
+Thumbs.db
