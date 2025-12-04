@@ -19,7 +19,7 @@ import {
   Target
 } from 'lucide-react';
 
-// Contract configuration - use the new Polkadot Asset Hub contract
+// Contract configuration - using Sepolia testnet contract
 const CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x0156962e58CA27B884a0ea120c184b2355A83D50').trim() as `0x${string}`;
 
 // Using the new simplified ABI from config
@@ -107,7 +107,7 @@ export default function TestPage() {
         functionName: 'createIssue',
         args: [
           formData.githubUrl || "https://github.com/test/repo/issues/1",
-          formData.description || "Test issue created via Sentinel platform",
+          formData.description || "Test issue created via Helix platform",
           formData.difficulty,
           BigInt(formData.easyDuration),
           BigInt(formData.mediumDuration),
@@ -302,13 +302,13 @@ export default function TestPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4 text-green-400 font-mono tracking-wider">
-            POLKADOT ASSET HUB TEST SUITE
+            ETHEREUM SEPOLIA TEST SUITE
           </h1>
           <p className="text-xl text-green-300">Simplified Contract Testing Interface</p>
           <div className="mt-4 p-4 bg-gray-900 border border-green-400 rounded">
             <p className="text-sm">Connected Address: <span className="text-cyan-400">{address}</span></p>
             <p className="text-sm">Contract: <span className="text-cyan-400">{CONTRACT_ADDRESS}</span></p>
-            <p className="text-sm">Network: <span className="text-cyan-400">Polkadot Asset Hub Paseo (420420422)</span></p>
+            <p className="text-sm">Network: <span className="text-cyan-400">Ethereum Sepolia (11155111)</span></p>
             <p className="text-sm text-green-400">✅ All addresses supported - No verification required!</p>
           </div>
         </div>

@@ -1,4 +1,4 @@
-# Sentinel Local Setup Guide
+# Helix Local Setup Guide
 
 ## Prerequisites
 
@@ -67,8 +67,8 @@ GITHUB_CLIENT_SECRET=your-github-client-secret
 # WalletConnect (Get from https://cloud.walletconnect.com/)
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your-walletconnect-project-id
 
-# Smart Contract Address (Already configured for Polkadot Asset Hub Paseo Testnet)
-NEXT_PUBLIC_CONTRACT_ADDRESS=0x0156962e58CA27B884a0ea120c184b2355A83D50
+# Smart Contract Address (Already configured for Ethereum Sepolia Testnet)
+NEXT_PUBLIC_CONTRACT_ADDRESS=0x14553856B61C2f653Cc167E31069068AC2c3f1d0
 ```
 
 ## Running the Application
@@ -134,6 +134,6 @@ If you encounter issues with Python packages, ensure you're using Python 3.8+ an
 
 ## Additional Resources
 
-- **Documentation**: https://ironjams-organization.gitbook.io/Sentinelv0
+- **Documentation**: https://ironjams-organization.gitbook.io/Helixv0
 - **Demo Video**: https://www.youtube.com/watch?v=BJkFdprHhmY
-- **Contract**: Polkadot Asset Hub Paseo Testnet - 0x0156962e58CA27B884a0ea120c184b2355A83D50
+- **Contract**: Ethereum Sepolia Testnet - 0x14553856B61C2f653Cc167E31069068AC2c3f1d0

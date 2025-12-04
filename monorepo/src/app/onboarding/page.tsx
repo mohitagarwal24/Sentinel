@@ -8,6 +8,10 @@ export default function OnboardingPage() {
     window.location.href = "/create-issue";
   };
 
+  const handleStartExploring = () => {
+    window.location.href = "/issues";
+  };
+
   const handleGoToTest = () => {
     window.location.href = "/test";
   };
@@ -49,10 +53,10 @@ export default function OnboardingPage() {
           <div className="mb-8 group relative">
             <h1 className="text-6xl md:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-green-300 to-green-500 uppercase tracking-wider relative">
               <span className="relative inline-block">
-                Sentinel
+                Helix
                 {/* Glitch overlay */}
                 <span className="absolute inset-0 text-green-400 opacity-70 animate-pulse" style={{ textShadow: '2px 0 red, -2px 0 cyan' }}>
-                  Sentinel
+                  Helix
                 </span>
               </span>
             </h1>
@@ -78,20 +82,28 @@ export default function OnboardingPage() {
                 <span className="text-green-400 font-bold uppercase">trustless</span>,{' '}
                 <span className="text-green-400 font-bold uppercase">fair</span>, and{' '}
                 <span className="text-green-400 font-bold uppercase">secure</span>.{' '}
-                Deployed on <span className="text-green-400 font-bold uppercase">Polkadot&apos;s Moonbase parachain</span> with{' '}
+                Deployed on <span className="text-green-400 font-bold uppercase">Ethereum Sepolia testnet</span> with{' '}
                 <span className="text-green-400 font-bold uppercase">verifiable AI agents</span> and{' '}
                 <span className="text-green-400 font-bold uppercase">zk-based verification</span>.
               </p>
             </div>
 
-            {/* Action Button */}
+            {/* Action Buttons */}
             <div className="p-6 bg-black/60 border-t border-green-400/30 border-dashed">
-              <Button
-                onClick={handleGetStarted}
-                className="w-full md:w-auto bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-black font-bold text-lg py-4 px-12 border-2 border-green-400 transition-all duration-300 transform hover:scale-105 uppercase tracking-wider"
-              >
-                START BUILDING
-              </Button>
+              <div className="flex flex-col md:flex-row gap-4 justify-center">
+                <Button
+                  onClick={handleGetStarted}
+                  className="bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-black font-bold text-lg py-4 px-12 border-2 border-green-400 transition-all duration-300 transform hover:scale-105 uppercase tracking-wider"
+                >
+                  START BUILDING
+                </Button>
+                <Button
+                  onClick={handleStartExploring}
+                  className="bg-black text-green-400 border-2 border-green-400 hover:bg-green-400 hover:text-black font-bold text-lg py-4 px-12 transition-all duration-300 transform hover:scale-105 uppercase tracking-wider"
+                >
+                  START EXPLORING
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -108,7 +120,7 @@ export default function OnboardingPage() {
               PLATFORM STATISTICS
             </h2>
             <p className="text-lg text-green-100 max-w-2xl mx-auto">
-              Real-time metrics and statistics from the Sentinel ecosystem
+              Real-time metrics and statistics from the Helix ecosystem
             </p>
           </div>
 
@@ -135,7 +147,7 @@ export default function OnboardingPage() {
                 <span className="text-sm font-bold text-green-400 bg-green-400/20 px-3 py-1 border border-green-400 font-mono">+8.2%</span>
               </div>
               <h3 className="text-3xl font-bold text-green-400 mb-1 font-mono">1,247</h3>
-              <p className="text-green-100 font-mono uppercase text-sm">ACTIVE DEVS</p>
+              <p className="text-green-100 font-mono uppercase text-sm">ACTIVE DEVELOPERS</p>
             </div>
 
             {/* Issues Resolved */}
@@ -174,7 +186,7 @@ export default function OnboardingPage() {
               HOW IT WORKS
             </h2>
             <p className="text-lg text-green-100 max-w-2xl mx-auto">
-              Get started with Sentinel in three simple steps
+              Get started with Helix in three simple steps
             </p>
           </div>
 
@@ -194,7 +206,7 @@ export default function OnboardingPage() {
 
                 <h3 className="text-xl font-bold text-green-400 mb-4 uppercase tracking-wider font-mono">CONNECT ACCOUNTS</h3>
                 <p className="text-green-100 text-sm leading-relaxed">
-                  Link your GitHub account and Polkadot wallet to access the platform with zk-based identity verification
+                  Link your GitHub account and Ethereum wallet to access the platform with secure identity verification
                 </p>
 
                 <div className="mt-6 h-px bg-green-400 w-full"></div>
@@ -232,7 +244,7 @@ export default function OnboardingPage() {
 
                 <h3 className="text-xl font-bold text-green-400 mb-4 uppercase tracking-wider font-mono">COLLABORATE & VERIFY</h3>
                 <p className="text-green-100 text-sm leading-relaxed">
-                  Work with verifiable AI agents on Moonbase parachain, preventing collusion and ensuring fair rewards
+                  Work with verifiable AI agents on Ethereum Sepolia, preventing collusion and ensuring fair rewards
                 </p>
 
                 <div className="mt-6 h-px bg-green-400 w-full"></div>
@@ -250,9 +262,9 @@ export default function OnboardingPage() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid md:grid-cols-3 gap-8 mb-8">
             <div>
-              <h3 className="text-2xl font-bold text-green-400 mb-4 font-upheaval uppercase">Sentinel</h3>
+              <h3 className="text-2xl font-bold text-green-400 mb-4 font-upheaval uppercase">Helix</h3>
               <p className="text-green-100 text-sm">
-                Blockchain-backed platform deployed on Polkadot&apos;s Moonbase parachain. Making open-source collaboration trustless, fair, and secure with verifiable AI and zk-based identity verification.
+                Blockchain-backed platform deployed on Ethereum Sepolia testnet. Making open-source collaboration trustless, fair, and secure with verifiable AI and secure identity verification.
               </p>
             </div>
 
@@ -279,7 +291,7 @@ export default function OnboardingPage() {
 
           <div className="pt-8 border-t border-green-400/20">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="text-green-400 font-upheaval font-bold text-lg">Sentinel</div>
+              <div className="text-green-400 font-upheaval font-bold text-lg">Helix</div>
               <div className="text-green-100 text-sm">
 
               </div>

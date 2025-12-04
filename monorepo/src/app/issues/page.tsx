@@ -4,11 +4,18 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { formatEther, parseEther } from "viem";
+
+// Utility function to format Ether with proper precision
+const formatEtherWithPrecision = (value: bigint, decimals: number = 4): string => {
+  const formatted = formatEther(value);
+  const num = parseFloat(formatted);
+  return num.toFixed(decimals).replace(/\.?0+$/, '');
+};
 import { CONTRACT_ABI } from "@/app/config/abi";
-import { 
-  Clock, 
-  DollarSign, 
-  User, 
+import {
+  Clock,
+  DollarSign,
+  User,
   Calendar,
   Tag,
   ExternalLink,
@@ -35,12 +42,22 @@ const CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '').trim()
 interface Issue {
   id: bigint;
   creator: string;
-  assignedTo: string;
+  githubIssueUrl: string;
+  description: string;
   bounty: bigint;
-  createdAt: bigint;
-  deadline: bigint;
-  difficulty: number;
+  assignedTo: string;
   isCompleted: boolean;
+  percentageCompleted: bigint;
+  claimedPercentage: bigint;
+  isUnderReview: boolean;
+  createdAt: bigint;
+  difficulty: number;
+  deadline: bigint;
+  easyDuration: bigint;
+  mediumDuration: bigint;
+  hardDuration: bigint;
+  presentHackerConfidenceScore: bigint;
+  minimumBountyCompletionPercentageForStakeReturn: bigint;
 }
 
 const difficultyLabels = ['Easy', 'Medium', 'Hard'];
@@ -61,7 +78,7 @@ export default function IssuesPage() {
 
   // Contract write hook for taking issues
   const { writeContract, data: hash, isPending, error } = useWriteContract();
-  
+
   // Wait for transaction receipt
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
@@ -145,11 +162,13 @@ export default function IssuesPage() {
   useEffect(() => {
     let filtered = issues;
 
-    // Search filter (simplified since we don't have description/URL in new contract)
+    // Search filter
     if (searchTerm) {
-      filtered = filtered.filter(issue => 
+      filtered = filtered.filter(issue =>
         issue.creator.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        issue.id.toString().includes(searchTerm)
+        issue.id.toString().includes(searchTerm) ||
+        issue.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        issue.githubIssueUrl.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -164,7 +183,7 @@ export default function IssuesPage() {
           case "completed":
             return issue.isCompleted;
           case "under-review":
-            return false; // Simplified contract doesn't track review state
+            return issue.isUnderReview;
           default:
             return true;
         }
@@ -182,13 +201,13 @@ export default function IssuesPage() {
 
   const getIssueStatus = (issue: Issue) => {
     if (issue.isCompleted) return { label: "Completed", color: "bg-[#56DF7C]", icon: CheckCircle2 };
-    // Removed under review state (not in simplified contract)
+    if (issue.isUnderReview) return { label: "Under Review", color: "bg-[#B490FF]", icon: Clock };
     if (issue.assignedTo !== "0x0000000000000000000000000000000000000000") {
       const isExpired = issue.deadline > BigInt(0) && BigInt(Math.floor(Date.now() / 1000)) > issue.deadline;
-      return { 
-        label: isExpired ? "Expired" : "Assigned", 
-        color: isExpired ? "bg-red-500" : "bg-[#FF9A51]", 
-        icon: isExpired ? AlertCircle : User 
+      return {
+        label: isExpired ? "Expired" : "Assigned",
+        color: isExpired ? "bg-red-500" : "bg-[#FF9A51]",
+        icon: isExpired ? AlertCircle : User
       };
     }
     return { label: "Open", color: "bg-[#7CC0FF]", icon: GitBranch };
@@ -197,7 +216,7 @@ export default function IssuesPage() {
   const formatTimeAgo = (timestamp: bigint) => {
     const now = Math.floor(Date.now() / 1000);
     const diff = now - Number(timestamp);
-    
+
     if (diff < 60) return "Just now";
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
     if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
@@ -207,8 +226,8 @@ export default function IssuesPage() {
   const openIssueModal = (issue: Issue) => {
     setSelectedIssue(issue);
     setIsModalOpen(true);
-    // Set default stake to 10% of bounty
-    const defaultStake = formatEther(issue.bounty / BigInt(10));
+    // Set default stake to 10% of bounty (using multiplication for better precision)
+    const defaultStake = formatEther(issue.bounty * BigInt(10) / BigInt(100));
     setStakeAmount(defaultStake);
   };
 
@@ -226,12 +245,12 @@ export default function IssuesPage() {
 
     try {
       setTakingIssue(selectedIssue.id.toString());
-      
+
       const stakeAmountWei = parseEther(stakeAmount);
-      
+
       console.log('Taking issue:', selectedIssue.id.toString());
       console.log('Stake amount (wei):', stakeAmountWei.toString());
-      
+
       await writeContract({
         address: CONTRACT_ADDRESS,
         abi: CONTRACT_ABI,
@@ -239,7 +258,7 @@ export default function IssuesPage() {
         args: [selectedIssue.id],
         value: stakeAmountWei,
       });
-      
+
       console.log('Take issue transaction submitted successfully');
     } catch (error) {
       console.error('Error taking issue:', error);
@@ -256,13 +275,13 @@ export default function IssuesPage() {
 
     try {
       setTakingIssue(issueId.toString());
-      
+
       // Calculate stake (10% of bounty as example)
-      const stakeAmount = bounty / BigInt(10);
-      
+      const stakeAmount = bounty * BigInt(10) / BigInt(100);
+
       console.log('Taking issue:', issueId.toString());
       console.log('Stake amount (wei):', stakeAmount.toString());
-      
+
       await writeContract({
         address: CONTRACT_ADDRESS,
         abi: CONTRACT_ABI,
@@ -270,7 +289,7 @@ export default function IssuesPage() {
         args: [issueId],
         value: stakeAmount,
       });
-      
+
       console.log('Take issue transaction submitted successfully');
     } catch (error) {
       console.error('Error taking issue:', error);
@@ -295,8 +314,8 @@ export default function IssuesPage() {
 
   if (issuesLoading || loading) {
     return (
-      <div className="min-h-screen bg-black bg-cover bg-center bg-fixed font-upheaval flex items-center justify-center" 
-           style={{ backgroundImage: "url('/background.webp')" }}>
+      <div className="min-h-screen bg-black bg-cover bg-center bg-fixed font-upheaval flex items-center justify-center"
+        style={{ backgroundImage: "url('/background.webp')" }}>
         <div className="absolute inset-0 bg-green-400/10 pointer-events-none"></div>
         <div className="text-center relative z-10">
           <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-green-400" />
@@ -309,7 +328,7 @@ export default function IssuesPage() {
   if (issuesError) {
     return (
       <div className="min-h-screen bg-black bg-cover bg-center bg-fixed font-upheaval flex items-center justify-center"
-           style={{ backgroundImage: "url('/background.webp')" }}>
+        style={{ backgroundImage: "url('/background.webp')" }}>
         <div className="absolute inset-0 bg-green-400/10 pointer-events-none"></div>
         <div className="text-center max-w-md relative z-10">
           <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-400" />
@@ -337,8 +356,8 @@ export default function IssuesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black bg-cover bg-center bg-fixed font-upheaval" 
-         style={{ backgroundImage: "url('/background.webp')" }}>
+    <div className="min-h-screen bg-black bg-cover bg-center bg-fixed font-upheaval"
+      style={{ backgroundImage: "url('/background.webp')" }}>
       <div className="absolute inset-0 bg-green-400/10 pointer-events-none"></div>
       {/* Header Section */}
       <section className="max-w-7xl mx-auto px-6 py-12 relative z-10">
@@ -347,9 +366,9 @@ export default function IssuesPage() {
             ALL ISSUES
           </h1>
           <p className="text-lg font-mono text-green-300 max-w-3xl mx-auto mb-8">
-            Browse and contribute to open-source issues with <em className="italic text-green-400">decentralized bounties</em> on the Moonbase Alpha blockchain.
+            Browse and contribute to open-source issues with <em className="italic text-green-400">decentralized bounties</em> on the Ethereum Sepolia blockchain.
           </p>
-          
+
           <div className="flex flex-col md:flex-row gap-4 justify-center items-center mb-8">
             <Link href="/create-issue">
               <Button className="bg-green-600 text-black px-8 py-4 border border-green-400 hover:bg-green-400 font-upheaval text-lg transition-all">
@@ -413,7 +432,7 @@ export default function IssuesPage() {
             <GitBranch className="w-16 h-16 mx-auto mb-4 text-green-400 opacity-50" />
             <h3 className="text-3xl font-upheaval text-green-400 mb-2">NO ISSUES FOUND</h3>
             <p className="font-mono text-green-300">
-              {issues.length === 0 
+              {issues.length === 0
                 ? "No issues have been created yet. Be the first to create one!"
                 : "Try adjusting your search or filter criteria."
               }
@@ -424,7 +443,7 @@ export default function IssuesPage() {
             {filteredIssues.map((issue) => {
               const status = getIssueStatus(issue);
               const StatusIcon = status.icon;
-              
+
               return (
                 <div
                   key={issue.id.toString()}
@@ -449,13 +468,13 @@ export default function IssuesPage() {
                     </div>
 
                     <h3 className="text-lg font-upheaval text-green-400 mb-2 line-clamp-2">
-                      Issue #{issue.id.toString()} - {difficultyLabels[issue.difficulty]} Level Bounty
+                      {issue.description || `Issue #${issue.id.toString()} - ${difficultyLabels[issue.difficulty]} Level Bounty`}
                     </h3>
 
                     <div className="flex items-center gap-2 text-green-300 mb-4">
                       <GitBranch className="w-4 h-4 text-green-400" />
                       <span className="text-sm font-mono truncate">
-                        Contract Issue #{issue.id.toString()}
+                        {issue.githubIssueUrl ? extractRepoFromUrl(issue.githubIssueUrl) : `Contract Issue #${issue.id.toString()}`}
                       </span>
                     </div>
                   </div>
@@ -466,7 +485,7 @@ export default function IssuesPage() {
                       <div className="flex items-center gap-2">
                         <DollarSign className="w-4 h-4 text-green-400" />
                         <span className="text-sm font-mono text-green-300 font-bold">
-                          {formatEther(issue.bounty)} DEV
+                          {formatEtherWithPrecision(issue.bounty)} ETH
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -490,20 +509,23 @@ export default function IssuesPage() {
                     )}
 
                     <div className="flex gap-2">
-                      <a
-                        href="#"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1"
-                      >
-                        <Button className="w-full bg-black text-green-400 border border-green-400 hover:bg-green-400 hover:text-black font-mono font-bold transition-all">
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          VIEW ON GITHUB
-                        </Button>
-                      </a>
-                      
+                      {issue.githubIssueUrl && (
+                        <a
+                          href={issue.githubIssueUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Button className="w-full bg-black text-green-400 border border-green-400 hover:bg-green-400 hover:text-black font-mono font-bold transition-all">
+                            <ExternalLink className="w-4 h-4 mr-2" />
+                            VIEW ON GITHUB
+                          </Button>
+                        </a>
+                      )}
+
                       {!issue.isCompleted && issue.assignedTo === "0x0000000000000000000000000000000000000000" && isConnected && (
-                        <Button 
+                        <Button
                           onClick={() => handleTakeIssue(issue.id, issue.bounty)}
                           disabled={takingIssue === issue.id.toString() || isPending || isConfirming}
                           className="bg-green-600 text-black border border-green-400 hover:bg-green-400 font-mono font-bold px-4 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
@@ -569,8 +591,10 @@ export default function IssuesPage() {
                   DESCRIPTION
                 </h3>
                 <div className="bg-black/80 border border-green-400 p-6 backdrop-blur-sm">
-                  <p className="font-mono text-green-300 leading-relaxed">
-                    This is Issue #{selectedIssue.id.toString()} with {difficultyLabels[selectedIssue.difficulty]} difficulty level.
+                  <p className="font-mono text-green-300 leading-relaxed mb-4">
+                    {selectedIssue.description || `This is Issue #${selectedIssue.id.toString()} with ${difficultyLabels[selectedIssue.difficulty]} difficulty level.`}
+                  </p>
+                  <p className="font-mono text-green-300/70 text-sm">
                     Created by: {selectedIssue.creator.slice(0, 6)}...{selectedIssue.creator.slice(-4)}
                   </p>
                 </div>
@@ -585,7 +609,7 @@ export default function IssuesPage() {
                       <DollarSign className="w-5 h-5 text-green-400" />
                       <span className="text-sm font-mono text-green-400 font-bold">BOUNTY</span>
                     </div>
-                    <span className="text-lg font-mono text-green-300">{formatEther(selectedIssue.bounty)} DEV</span>
+                    <span className="text-lg font-mono text-green-300">{formatEtherWithPrecision(selectedIssue.bounty)} ETH</span>
                   </div>
 
                   <div className="bg-black/80 border border-green-400 p-4 backdrop-blur-sm">
@@ -601,7 +625,9 @@ export default function IssuesPage() {
                       <GitBranch className="w-5 h-5 text-green-400" />
                       <span className="text-sm font-mono text-green-400 font-bold">REPOSITORY</span>
                     </div>
-                    <span className="font-mono text-green-300">Contract Issue #{selectedIssue.id.toString()}</span>
+                    <span className="font-mono text-green-300">
+                      {selectedIssue.githubIssueUrl ? extractRepoFromUrl(selectedIssue.githubIssueUrl) : `Contract Issue #${selectedIssue.id.toString()}`}
+                    </span>
                   </div>
                 </div>
 
@@ -631,12 +657,12 @@ export default function IssuesPage() {
                     STAKE & CONTRIBUTE
                   </h3>
                   <p className="font-mono text-green-300 mb-4">
-                    To work on this issue, you need to stake DEV as a commitment. The stake will be returned when you complete the work.
+                    To work on this issue, you need to stake ETH as a commitment. The stake will be returned when you complete the work.
                   </p>
-                  
+
                   <div className="mb-4">
                     <label className="text-sm font-mono text-green-400 font-bold mb-2 block">
-                      STAKE AMOUNT (DEV)
+                      STAKE AMOUNT (ETH)
                     </label>
                     <input
                       type="number"
@@ -648,7 +674,7 @@ export default function IssuesPage() {
                       min="0"
                     />
                     <p className="text-sm font-mono text-green-300/70 mt-1">
-                      Recommended: {formatEther(selectedIssue.bounty / BigInt(10))} DEV (10% of bounty)
+                      Recommended: {formatEtherWithPrecision(selectedIssue.bounty * BigInt(10) / BigInt(100))} ETH (10% of bounty)
                     </p>
                   </div>
 
@@ -674,18 +700,20 @@ export default function IssuesPage() {
 
               {/* Action Buttons */}
               <div className="flex gap-4">
-                <a
-                  href="#"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1"
-                >
-                  <Button className="w-full bg-black text-green-400 border border-green-400 hover:bg-green-400 hover:text-black font-mono font-bold py-3 transition-all">
-                    <ExternalLink className="w-5 h-5 mr-2" />
-                    VIEW ON GITHUB
-                  </Button>
-                </a>
-                
+                {selectedIssue.githubIssueUrl && (
+                  <a
+                    href={selectedIssue.githubIssueUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1"
+                  >
+                    <Button className="w-full bg-black text-green-400 border border-green-400 hover:bg-green-400 hover:text-black font-mono font-bold py-3 transition-all">
+                      <ExternalLink className="w-5 h-5 mr-2" />
+                      VIEW ON GITHUB
+                    </Button>
+                  </a>
+                )}
+
                 <Button
                   onClick={closeModal}
                   variant="outline"

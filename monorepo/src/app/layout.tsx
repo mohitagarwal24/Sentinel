@@ -13,8 +13,8 @@ const inter = Inter({
 // Note: GT Alpina font will be loaded via CSS @font-face rules in globals.css
 
 export const metadata: Metadata = {
-  title: "Sentinel - Celo Development Platform",
-  description: "Build the future on 0g with our comprehensive development platform",
+  title: "Helix",
+  description: "",
 };
 
 export default function RootLayout({
@@ -26,6 +26,7 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${inter.variable} font-gt-alpina bg-gypsum text-onyx antialiased`}
+        suppressHydrationWarning={true}
       >
         <ClientProviders>
           <Navbar />

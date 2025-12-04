@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Setting up Sentinel project..."
+echo "🚀 Setting up Helix project..."
 
 # Check if Python virtual environment exists
 if [ ! -d "venv" ]; then

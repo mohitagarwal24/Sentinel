@@ -4,7 +4,14 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
-import { parseEther } from "viem";
+import { parseEther, formatEther } from "viem";
+
+// Utility function to format Ether with proper precision
+const formatEtherWithPrecision = (value: bigint, decimals: number = 4): string => {
+  const formatted = formatEther(value);
+  const num = parseFloat(formatted);
+  return num.toFixed(decimals).replace(/\.?0+$/, '');
+};
 import { GitHubAPI, createDifficultyLabels } from "@/lib/github-api";
 import { CONTRACT_ABI } from '../config/abi';
 import {
@@ -107,14 +114,33 @@ export default function CreateIssuePage() {
   const { address, isConnected } = useAccount();
   const [mounted, setMounted] = useState(false);
 
+  // State management
+  const [githubIssues, setGithubIssues] = useState<GitHubIssue[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [repositories, setRepositories] = useState<any[]>([]);
+  const [repositoriesLoaded, setRepositoriesLoaded] = useState(false);
+  const [repositoriesLoading, setRepositoriesLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [fetchingBounties, setFetchingBounties] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [selectedRepo, setSelectedRepo] = useState<string>(""); // Format: "owner/repo"
+  const [issueBounties, setIssueBounties] = useState<Map<string, { amount: string; difficulty: string }>>(new Map());
+
+  // AI Analysis states
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showSuggestion, setShowSuggestion] = useState(false);
+  const [approvingIssue, setApprovingIssue] = useState(false);
+  const [hasRepoScope, setHasRepoScope] = useState<boolean | null>(null);
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Check token scopes on mount
+  // Check token scopes on mount (only when accessToken changes)
   useEffect(() => {
     const checkTokenScopes = async () => {
-      if (session?.accessToken) {
+      if (session?.accessToken && hasRepoScope === null) {
         try {
           const userResponse = await fetch('https://api.github.com/user', {
             headers: {
@@ -130,29 +156,13 @@ export default function CreateIssuePage() {
           }
         } catch (error) {
           console.warn('Could not check token scopes:', error);
+          setHasRepoScope(false);
         }
       }
     };
 
     checkTokenScopes();
-  }, [session]);
-
-  // State management
-  const [githubIssues, setGithubIssues] = useState<GitHubIssue[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [repositories, setRepositories] = useState<any[]>([]);
-  const [repositoriesLoaded, setRepositoriesLoaded] = useState(false);
-  const [repositoriesLoading, setRepositoriesLoading] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [selectedRepo, setSelectedRepo] = useState<string>(""); // Format: "owner/repo"
-
-  // AI Analysis states
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [showSuggestion, setShowSuggestion] = useState(false);
-  const [approvingIssue, setApprovingIssue] = useState(false);
-  const [hasRepoScope, setHasRepoScope] = useState<boolean | null>(null);
+  }, [session?.accessToken, hasRepoScope]); // Only run when accessToken changes or hasRepoScope is null
 
   // Form state
   const [formData, setFormData] = useState({
@@ -171,6 +181,16 @@ export default function CreateIssuePage() {
 
   // Contract interaction
   const { data: contractWriteData, writeContract, isPending: isContractLoading, error: contractError } = useWriteContract();
+
+  // Get all existing issues to check for duplicates
+  const { data: existingIssueIds } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: CONTRACT_ABI,
+    functionName: 'getOrganisationIssues',
+    query: {
+      enabled: Boolean(CONTRACT_ADDRESS),
+    },
+  });
 
   const { isLoading: isTransactionLoading, isSuccess: isTransactionSuccess, error: transactionError } = useWaitForTransactionReceipt({
     hash: contractWriteData,
@@ -192,6 +212,134 @@ export default function CreateIssuePage() {
       enabled: !!address,
     }
   });
+
+  // Function to add GitHub tags when bounty is created
+  const addGitHubTags = async (githubUrl: string, difficulty: Difficulty, bountyAmount: string) => {
+    if (!session?.accessToken) return;
+
+    try {
+      // Extract owner, repo, and issue number from GitHub URL
+      const urlMatch = githubUrl.match(/github\.com\/([^\/]+)\/([^\/]+)\/issues\/(\d+)/);
+      if (!urlMatch) {
+        console.error('Invalid GitHub URL format:', githubUrl);
+        return;
+      }
+
+      const [, owner, repo, issueNumberStr] = urlMatch;
+      const issueNumber = parseInt(issueNumberStr, 10);
+
+      const githubApi = new GitHubAPI(session.accessToken);
+
+      // Create tags to add
+      const difficultyLabel = `difficulty:${['easy', 'medium', 'hard'][difficulty]}`;
+      const bountyLabel = `bounty:${bountyAmount}ETH`;
+      const helixLabel = 'helix-bounty';
+
+      const labelsToAdd = [difficultyLabel, bountyLabel, helixLabel];
+
+      console.log(`Adding GitHub labels to ${owner}/${repo}#${issueNumber}:`, labelsToAdd);
+
+      // Add labels to the GitHub issue
+      await githubApi.addLabelsToIssue(owner, repo, issueNumber, labelsToAdd);
+
+      console.log('Successfully added GitHub labels');
+    } catch (error) {
+      console.error('Error adding GitHub tags:', error);
+      throw error;
+    }
+  };
+
+  // Function to fetch bounty information for GitHub issues
+  const fetchIssueBounties = async (issues: GitHubIssue[]) => {
+    if (!existingIssueIds || !Array.isArray(existingIssueIds) || fetchingBounties) {
+      return;
+    }
+
+    setFetchingBounties(true);
+
+    const bountyMap = new Map<string, { amount: string; difficulty: string }>();
+
+    try {
+      const { readContract } = await import('viem/actions');
+      const { createPublicClient, http } = await import('viem');
+      const { sepolia } = await import('viem/chains');
+      const { formatEther } = await import('viem');
+
+      const publicClient = createPublicClient({
+        chain: sepolia,
+        transport: http()
+      });
+
+      // Check each existing issue
+      for (const issueId of existingIssueIds) {
+        try {
+          const issueData = await readContract(publicClient, {
+            address: CONTRACT_ADDRESS,
+            abi: CONTRACT_ABI,
+            functionName: 'getIssueInfo',
+            args: [BigInt(issueId.toString())],
+          });
+
+          if (issueData && issueData.githubIssueUrl) {
+            const difficulty = ['Easy', 'Medium', 'Hard'][issueData.difficulty] || 'Easy';
+            bountyMap.set(issueData.githubIssueUrl, {
+              amount: formatEtherWithPrecision(issueData.bounty),
+              difficulty
+            });
+          }
+        } catch (error) {
+          console.error(`Error fetching bounty for issue ${issueId}:`, error);
+        }
+      }
+
+      setIssueBounties(bountyMap);
+    } catch (error) {
+      console.error('Error fetching issue bounties:', error);
+    } finally {
+      setFetchingBounties(false);
+    }
+  };
+
+  // Function to check if GitHub URL already has a bounty
+  const checkForExistingBounty = async (githubUrl: string): Promise<boolean> => {
+    if (!existingIssueIds || !Array.isArray(existingIssueIds)) {
+      return false;
+    }
+
+    try {
+      const { readContract } = await import('viem/actions');
+      const { createPublicClient, http } = await import('viem');
+      const { sepolia } = await import('viem/chains');
+
+      const publicClient = createPublicClient({
+        chain: sepolia,
+        transport: http()
+      });
+
+      // Check each existing issue to see if it has the same GitHub URL
+      for (const issueId of existingIssueIds) {
+        try {
+          const issueData = await readContract(publicClient, {
+            address: CONTRACT_ADDRESS,
+            abi: CONTRACT_ABI,
+            functionName: 'getIssueInfo',
+            args: [BigInt(issueId.toString())],
+          });
+
+          // Check if the GitHub URL matches
+          if (issueData && issueData.githubIssueUrl === githubUrl) {
+            return true; // Found existing bounty for this URL
+          }
+        } catch (error) {
+          console.error(`Error checking issue ${issueId}:`, error);
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error('Error checking for existing bounty:', error);
+      return false;
+    }
+  };
 
   // Verification function
   const handleVerification = async () => {
@@ -229,7 +377,7 @@ export default function CreateIssuePage() {
     if (session?.accessToken && selectedRepo) {
       fetchGitHubIssues();
     }
-  }, [session, selectedRepo]);
+  }, [session?.accessToken, selectedRepo]); // Only depend on accessToken, not entire session object
 
   // Handle transaction success/failure
   useEffect(() => {
@@ -246,6 +394,19 @@ export default function CreateIssuePage() {
       if (pendingGitHubIssue) {
         console.log('Transaction successful, adding new issue to list');
         setGithubIssues(prev => [pendingGitHubIssue, ...prev]);
+      }
+
+      // Add GitHub tags for the bounty
+      if (formData.githubUrl && session?.accessToken) {
+        const addTags = async () => {
+          try {
+            await addGitHubTags(formData.githubUrl, formData.difficulty, formData.bountyAmount);
+          } catch (error) {
+            console.error('Failed to add GitHub tags:', error);
+            // Don't fail the entire process if tagging fails
+          }
+        };
+        addTags();
       }
 
       // Transaction succeeded - close form and reset
@@ -333,6 +494,9 @@ export default function CreateIssuePage() {
       const [owner, repo] = selectedRepo.split('/');
       const issues = await githubApi.getRepoIssues(owner, repo);
       setGithubIssues(issues);
+
+      // Fetch bounty information for these issues
+      await fetchIssueBounties(issues);
     } catch (error) {
       console.error('Error fetching GitHub issues:', error);
     } finally {
@@ -356,7 +520,7 @@ export default function CreateIssuePage() {
         labels: [
           `difficulty:${DIFFICULTY_CONFIG[formData.difficulty].label.toLowerCase()}`,
           'bounty',
-          'Sentinel'
+          'Helix'
         ]
       });
 
@@ -508,7 +672,7 @@ export default function CreateIssuePage() {
         ...(Array.isArray(analysisResult.github_payload.labels) ? analysisResult.github_payload.labels : []),
         `difficulty:${analysisResult.synthesized_analysis.difficulty.toLowerCase()}`,
         'bounty',
-        'Sentinel',
+        'Helix',
         'ai-generated'
       ];
 
@@ -522,7 +686,7 @@ export default function CreateIssuePage() {
 
       const newIssue = await githubApi.createIssue(owner, repo, {
         title: analysisResult.github_payload.title || 'Generated Issue',
-        body: analysisResult.github_payload.body || 'This issue was generated by Sentinel.',
+        body: analysisResult.github_payload.body || 'This issue was generated by Helix.',
         labels: labels
       });
 
@@ -548,6 +712,26 @@ export default function CreateIssuePage() {
   const handleCreateBounty = async () => {
     if (!isConnected || !session) return;
 
+    // Prevent multiple submissions
+    if (isContractLoading || isTransactionLoading) {
+      console.log('Transaction already in progress, ignoring duplicate request');
+      return;
+    }
+
+    // Check if GitHub URL is provided and valid
+    if (!formData.githubUrl || !formData.githubUrl.includes('github.com')) {
+      alert('Please provide a valid GitHub issue URL');
+      return;
+    }
+
+    // Check for existing bounty
+    console.log('Checking for existing bounty for URL:', formData.githubUrl);
+    const hasExistingBounty = await checkForExistingBounty(formData.githubUrl);
+    if (hasExistingBounty) {
+      alert('A bounty already exists for this GitHub issue. Please choose a different issue.');
+      return;
+    }
+
     try {
       // Create bounty on blockchain with all required parameters
       const bountyInWei = parseEther(formData.bountyAmount);
@@ -557,7 +741,7 @@ export default function CreateIssuePage() {
 
       // Prepare all required parameters for the smart contract
       const githubUrl = formData.githubUrl || "https://github.com/placeholder/issue";
-      const description = formData.description || "Issue created via Sentinel platform";
+      const description = formData.description || "Issue created via Helix platform";
       const easyDuration = formData.customDurations.easy || 7; // days
       const mediumDuration = formData.customDurations.medium || 14; // days  
       const hardDuration = formData.customDurations.hard || 21; // days
@@ -624,7 +808,7 @@ export default function CreateIssuePage() {
           <AlertCircle className="w-16 h-16 mx-auto mb-6 text-green-400" />
           <h1 className="text-2xl font-bold text-green-400 mb-4 font-mono uppercase tracking-wider">Authentication Required</h1>
           <p className="text-green-300 mb-6 text-sm">
-            Please connect your GitHub account and Polkadot wallet to create and manage issues.
+            Please connect your GitHub account and Ethereum wallet to create and manage issues.
           </p>
           <Button className="bg-green-600 hover:bg-green-700 text-black px-8 py-3 border-2 border-green-400 font-bold font-mono uppercase tracking-wide">
             Connect Accounts
@@ -663,7 +847,7 @@ export default function CreateIssuePage() {
           <div>
             <h1 className="text-4xl md:text-6xl font-bold text-green-400 uppercase tracking-wider mb-2">ISSUE MANAGEMENT</h1>
             <p className="text-lg text-green-100 max-w-2xl">
-              Create blockchain-backed issues with bounties and manage your repository&apos;s development workflow
+              Create blockchain-backed issues with bounties and manage your repository's workflow
             </p>
           </div>
 
@@ -816,14 +1000,14 @@ export default function CreateIssuePage() {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex flex-wrap gap-2">
                   <div className={`${analysisResult.synthesized_analysis.difficulty === 'Easy' ? 'bg-green-600' :
-                      analysisResult.synthesized_analysis.difficulty === 'Medium' ? 'bg-yellow-600' :
-                        'bg-red-600'
+                    analysisResult.synthesized_analysis.difficulty === 'Medium' ? 'bg-yellow-600' :
+                      'bg-red-600'
                     } border border-green-400 px-2 py-1`}>
                     <span className="text-sm font-mono text-black">{analysisResult.synthesized_analysis.difficulty}</span>
                   </div>
                   <div className={`${analysisResult.synthesized_analysis.priority === 'Low' ? 'bg-green-600' :
-                      analysisResult.synthesized_analysis.priority === 'Medium' ? 'bg-yellow-600' :
-                        'bg-red-600'
+                    analysisResult.synthesized_analysis.priority === 'Medium' ? 'bg-yellow-600' :
+                      'bg-red-600'
                     } border border-green-400 px-2 py-1`}>
                     <span className="text-sm font-mono text-black">{analysisResult.synthesized_analysis.priority}</span>
                   </div>
@@ -909,6 +1093,7 @@ export default function CreateIssuePage() {
             {githubIssues.map((issue) => {
               const difficulty = getDifficultyFromLabels(issue.labels);
               const config = DIFFICULTY_CONFIG[difficulty];
+              const bountyInfo = issueBounties.get(issue.html_url);
 
               return (
                 <div
@@ -923,8 +1108,13 @@ export default function CreateIssuePage() {
                     </div>
                     <div className="flex gap-2">
                       <div className="bg-green-600 border border-green-400 px-2 py-1">
-                        <span className="text-sm font-mono text-black">{config.label}</span>
+                        <span className="text-sm font-mono text-black">{bountyInfo?.difficulty || config.label}</span>
                       </div>
+                      {bountyInfo && (
+                        <div className="bg-yellow-500 border border-yellow-400 px-2 py-1">
+                          <span className="text-sm font-mono text-black">BOUNTY</span>
+                        </div>
+                      )}
                       {issue.state === 'open' && (
                         <div className="bg-green-500 border border-green-400 px-2 py-1">
                           <span className="text-sm font-mono text-black">OPEN</span>
@@ -976,15 +1166,21 @@ export default function CreateIssuePage() {
                   </div>
 
                   {/* Bounty Info */}
-                  <div className="bg-green-400/10 border border-green-400 p-3 mb-4">
+                  <div className={`${bountyInfo ? 'bg-yellow-400/10 border-yellow-400' : 'bg-green-400/10 border-green-400'} border p-3 mb-4`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <DollarSign className="w-4 h-4 text-green-400" />
-                        <span className="text-sm font-mono text-green-400 font-bold">STAKED AMOUNT BY MAINTAINER</span>
+                        <DollarSign className={`w-4 h-4 ${bountyInfo ? 'text-yellow-400' : 'text-green-400'}`} />
+                        <span className={`text-sm font-mono ${bountyInfo ? 'text-yellow-400' : 'text-green-400'} font-bold`}>
+                          STAKED AMOUNT BY MAINTAINER
+                        </span>
                       </div>
-                      <span className="text-sm font-mono text-green-400 font-bold">0.0 DEV</span>
+                      <span className={`text-sm font-mono ${bountyInfo ? 'text-yellow-400' : 'text-green-400'} font-bold`}>
+                        {bountyInfo ? `${bountyInfo.amount} ETH` : '0.0 ETH'}
+                      </span>
                     </div>
-                    <p className="text-xs font-mono text-green-300 mt-1">No active bounty - Click &quot;Add Bounty&quot; to stake DEV</p>
+                    <p className={`text-xs font-mono ${bountyInfo ? 'text-yellow-300' : 'text-green-300'} mt-1`}>
+                      {bountyInfo ? `Active bounty available - ${bountyInfo.difficulty} difficulty` : 'No active bounty - Click "Add Bounty" to stake ETH'}
+                    </p>
                   </div>
 
                   {/* Actions */}
@@ -997,19 +1193,25 @@ export default function CreateIssuePage() {
                       VIEW ON GITHUB
                     </Button>
                     <Button
-                      className="bg-green-600 text-black px-4 py-2 border border-green-400 font-mono text-sm hover:bg-green-400 transition-all"
+                      className={`px-4 py-2 border font-mono text-sm transition-all ${bountyInfo
+                        ? 'bg-gray-600 text-gray-400 border-gray-400 cursor-not-allowed'
+                        : 'bg-green-600 text-black border-green-400 hover:bg-green-400'
+                        }`}
+                      disabled={!!bountyInfo}
                       onClick={() => {
-                        setFormData(prev => ({
-                          ...prev,
-                          githubUrl: issue.html_url,
-                          title: issue.title,
-                          description: issue.body || ""
-                        }));
-                        setShowCreateForm(true);
+                        if (!bountyInfo) {
+                          setFormData(prev => ({
+                            ...prev,
+                            githubUrl: issue.html_url,
+                            title: issue.title,
+                            description: issue.body || ""
+                          }));
+                          setShowCreateForm(true);
+                        }
                       }}
                     >
                       <DollarSign className="w-4 h-4 mr-1" />
-                      ADD BOUNTY
+                      {bountyInfo ? 'BOUNTY EXISTS' : 'ADD BOUNTY'}
                     </Button>
                   </div>
                 </div>
@@ -1101,7 +1303,7 @@ export default function CreateIssuePage() {
 
               {/* Bounty Amount */}
               <div>
-                <label className="text-sm font-mono text-green-400 mb-2 block">BOUNTY AMOUNT (DEV) *</label>
+                <label className="text-sm font-mono text-green-400 mb-2 block">BOUNTY AMOUNT (ETH) *</label>
                 <div className="relative">
                   <input
                     type="number"
@@ -1113,11 +1315,11 @@ export default function CreateIssuePage() {
                     placeholder="0.100"
                   />
                   <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                    <span className="text-sm font-mono text-green-400">DEV</span>
+                    <span className="text-sm font-mono text-green-400">ETH</span>
                   </div>
                 </div>
                 <p className="text-sm font-mono text-green-300 mt-1">
-                  Minimum: 0.01 DEV (≈ $0.50)
+                  Minimum: 0.001 ETH
                 </p>
               </div>
 
@@ -1165,7 +1367,7 @@ export default function CreateIssuePage() {
                 ) : (
                   <>
                     <Zap className="w-5 h-5 mr-2" />
-                    CREATE BOUNTY ({formData.bountyAmount} DEV)
+                    CREATE BOUNTY ({formData.bountyAmount} ETH)
                   </>
                 )}
               </Button>

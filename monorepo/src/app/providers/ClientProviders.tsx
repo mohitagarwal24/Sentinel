@@ -67,59 +67,9 @@ const celoSepolia = {
   testnet: true,
 } as const;
 
-// Define Moonbase Alpha testnet
-const moonbaseAlpha = {
-  id: 1287,
-  name: 'Moonbase Alpha',
-  nativeCurrency: {
-    decimals: 18,
-    name: 'DEV',
-    symbol: 'DEV',
-  },
-  rpcUrls: {
-    default: {
-      http: ['https://rpc.api.moonbase.moonbeam.network'],
-    },
-    public: {
-      http: ['https://rpc.api.moonbase.moonbeam.network'],
-    },
-  },
-  blockExplorers: {
-    default: {
-      name: 'Moonscan',
-      url: 'https://moonbase.moonscan.io',
-    },
-  },
-  testnet: true,
-} as const;
+// Removed Polkadot Asset Hub and Moonbase Alpha - using Sepolia instead
 
-// Define Polkadot Asset Hub Testnet
-const polkadotAssetHub = {
-  id: 420420422, // Asset Hub Paseo Testnet chain ID (0x190f1b46)
-  name: 'Polkadot Asset Hub Testnet (Paseo)',
-  nativeCurrency: {
-    decimals: 18,
-    name: 'ETH',
-    symbol: 'ETH',
-  },
-  rpcUrls: {
-    default: {
-      http: ['https://testnet-passet-hub-eth-rpc.polkadot.io'],
-    },
-    public: {
-      http: ['https://testnet-passet-hub-eth-rpc.polkadot.io'],
-    },
-  },
-  blockExplorers: {
-    default: {
-      name: 'Polkadot Asset Hub Explorer',
-      url: 'https://assethub-paseo.subscan.io',
-    },
-  },
-  testnet: true,
-} as const;
-
-const chains = [polkadotAssetHub, moonbaseAlpha, celo, celoSepolia, mainnet, polygon, optimism, arbitrum, base, sepolia, baseSepolia] as const;
+const chains = [sepolia, baseSepolia, celo, celoSepolia, mainnet, polygon, optimism, arbitrum, base] as const;
 
 const connectors = connectorsForWallets(
   [
@@ -194,8 +144,8 @@ const wagmiConfig = createConfig({
   chains,
   connectors,
   transports: {
-    [polkadotAssetHub.id]: http('https://testnet-passet-hub-eth-rpc.polkadot.io'),
-    [moonbaseAlpha.id]: http(),
+    [sepolia.id]: http(),
+    [baseSepolia.id]: http(),
     [celo.id]: http(),
     [celoSepolia.id]: http(),
     [mainnet.id]: http(),
@@ -203,16 +153,14 @@ const wagmiConfig = createConfig({
     [optimism.id]: http(),
     [arbitrum.id]: http(),
     [base.id]: http(),
-    [sepolia.id]: http(),
-    [baseSepolia.id]: http(),
   },
 });
 
 const queryClient = new QueryClient();
 
 const customTheme = darkTheme({
-  accentColor: '#000000', 
-  accentColorForeground: '#ffffff', 
+  accentColor: '#000000',
+  accentColorForeground: '#ffffff',
   borderRadius: 'medium',
   fontStack: 'system',
   overlayBlur: 'small',
@@ -309,9 +257,9 @@ export default function ClientProviders({ children }: { children: ReactNode }) {
                 },
               }}
             />
-        </RainbowKitProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+          </RainbowKitProvider>
+        </QueryClientProvider>
+      </WagmiProvider>
     </AuthProvider>
   );
 }
