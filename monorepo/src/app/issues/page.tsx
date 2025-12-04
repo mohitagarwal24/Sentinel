@@ -67,11 +67,11 @@ export default function IssuesPage() {
     hash,
   });
 
-  // Get all issues directly using the new getAllIssues function
-  const { data: allIssues, isError: issuesError, isLoading: issuesLoading, error: contractError } = useReadContract({
+  // Get issue IDs using getOrganisationIssues
+  const { data: issueIds, isError: issuesError, isLoading: issuesLoading, error: contractError } = useReadContract({
     address: CONTRACT_ADDRESS,
     abi: CONTRACT_ABI,
-    functionName: 'getAllIssues',
+    functionName: 'getOrganisationIssues',
     query: {
       enabled: Boolean(CONTRACT_ADDRESS),
     },
@@ -83,21 +83,63 @@ export default function IssuesPage() {
     console.log('Issues Error:', issuesError);
     console.log('Contract Error:', contractError);
     console.log('Issues Loading:', issuesLoading);
-    console.log('All Issues Data:', allIssues);
-  }, [CONTRACT_ADDRESS, issuesError, contractError, issuesLoading, allIssues]);
+    console.log('Issue IDs Data:', issueIds);
+  }, [CONTRACT_ADDRESS, issuesError, contractError, issuesLoading, issueIds]);
 
-  // Update issues state when data is loaded
+  // Fetch full issue details when issue IDs are loaded
   useEffect(() => {
-    if (allIssues && Array.isArray(allIssues)) {
-      // Add index as ID for each issue since the new ABI doesn't include ID
-      const validIssues = allIssues.map((issue, index) => ({
-        ...issue,
-        id: BigInt(index)
-      })).filter(issue => issue && issue.creator !== "0x0000000000000000000000000000000000000000");
-      setIssues(validIssues);
-    }
-    setLoading(false);
-  }, [allIssues]);
+    const fetchIssueDetails = async () => {
+      if (!issueIds || !Array.isArray(issueIds) || issueIds.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      console.log('Fetching details for issue IDs:', issueIds);
+      setLoading(true);
+
+      try {
+        // Import the necessary functions for contract reading
+        const { readContract } = await import('viem/actions');
+        const { createPublicClient, http } = await import('viem');
+        const { sepolia } = await import('viem/chains');
+
+        // Create a public client for reading contract data
+        const publicClient = createPublicClient({
+          chain: sepolia,
+          transport: http()
+        });
+
+        // Fetch details for each issue ID
+        const issuePromises = issueIds.map(async (issueId) => {
+          try {
+            const issueData = await readContract(publicClient, {
+              address: CONTRACT_ADDRESS,
+              abi: CONTRACT_ABI,
+              functionName: 'getIssueInfo',
+              args: [BigInt(issueId.toString())],
+            });
+
+            return issueData;
+          } catch (error) {
+            console.error(`Error fetching issue ${issueId}:`, error);
+            return null;
+          }
+        });
+
+        const issuesData = await Promise.all(issuePromises);
+        const validIssues = issuesData.filter(issue => issue !== null);
+
+        console.log('Fetched issue details:', validIssues);
+        setIssues(validIssues);
+      } catch (error) {
+        console.error('Error fetching issue details:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchIssueDetails();
+  }, [issueIds]);
 
   // Filter issues based on search and filters
   useEffect(() => {

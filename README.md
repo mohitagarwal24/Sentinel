@@ -1,6 +1,14 @@
 # Sentinel 
 
-![Sentinel Architecture](https://github.com/user-attachments/assets/9f872e33-3233-4f3f-91c6-28ce6b3cb165)
+![SecGIT Architecture](https://github.com/user-attachments/assets/9f872e33-3233-4f3f-91c6-28ce6b3cb165)
+
+**GitBook Documentation:** *https://ironjams-organization.gitbook.io/secgitv0*
+
+**Demo / Video:** *https://www.youtube.com/watch?v=BJkFdprHhmY*
+
+**Contract Deployment:** *Polkadot Asset Hub Paseo Testnet - 0x0156962e58CA27B884a0ea120c184b2355A83D50* 
+
+**Pitch Deck:** *https://docs.google.com/presentation/d/1LXHewLD40gUQS4f7ee37pXC1SUblC3Uz/edit?usp=sharing&ouid=114427212853808112022&rtpof=true&sd=true*
 
 ---
 
@@ -32,6 +40,7 @@ Sentinel enforces fairness and transparency through:
 2. **Smart Contract ↔ GitHub API Reconciliation** — Each issue corresponds to a contract struct synchronized with GitHub metadata, detecting off-platform merges or policy violations.
 3. **Verifiable AI Agents** — Auditable AI models assist in PR review and code evaluation. Their actions and reputations are tracked on-chain.
 
+![SecGIT Workflow](https://github.com/user-attachments/assets/62f485cf-6c26-44a0-9dd4-ef69ebf900f7)
 
 ---
 
@@ -89,5 +98,5 @@ Sentinel enforces fairness and transparency through:
 
 ## Summary
 
-Sentinel brings **trustless accountability** to open-source collaboration through a hybrid of **staking, verifiable AI**. By ensuring that every contribution is genuine, auditable, and economically aligned, Sentinel restores transparency, fairness, and trust to the open-source ecosystem.
+SecGIT brings **trustless accountability** to open-source collaboration through a hybrid of **staking, verifiable AI, and zk-identity verification**. By ensuring that every contribution is genuine, auditable, and economically aligned, SecGIT restores transparency, fairness, and trust to the open-source ecosystem.
 

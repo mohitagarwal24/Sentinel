@@ -13,7 +13,7 @@ const inter = Inter({
 // Note: GT Alpina font will be loaded via CSS @font-face rules in globals.css
 
 export const metadata: Metadata = {
-  title: "SecGit - Celo Development Platform",
+  title: "Sentinel - Celo Development Platform",
   description: "Build the future on 0g with our comprehensive development platform",
 };
 

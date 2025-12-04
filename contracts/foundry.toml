@@ -9,9 +9,14 @@ via_ir = true
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
 
 [rpc_endpoints]
-celo-sepolia = "https://forno.celo-sepolia.celo-testnet.org/"
-# celo = "https://forno.celo.org"
-celo = "https://forno.celo-sepolia.celo-testnet.org/" 
+sepolia = "https://sepolia.infura.io/v3/${INFURA_API_KEY}"
+# Alternative RPC endpoints for Sepolia
+# sepolia = "https://rpc.sepolia.org"
+# sepolia = "https://ethereum-sepolia.blockpi.network/v1/rpc/public"
+
+# Legacy Celo endpoints (commented out)
+# celo-sepolia = "https://forno.celo-sepolia.celo-testnet.org/"
+# celo = "https://forno.celo.org" 
 
 
 

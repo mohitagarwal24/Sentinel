@@ -13,7 +13,7 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen bg-black font-upheaval relative"
       style={{
         backgroundImage: "url('/background.webp')",
@@ -25,52 +25,52 @@ export default function OnboardingPage() {
     >
       {/* Reduced dark overlay for higher background intensity */}
       <div className="absolute inset-0 bg-black/30 z-0"></div>
-      
+
       {/* Enhanced Green grid overlay effect */}
-      <div className="absolute inset-0 opacity-40 z-0" 
-           style={{
-             backgroundImage: `
+      <div className="absolute inset-0 opacity-40 z-0"
+        style={{
+          backgroundImage: `
                linear-gradient(rgba(34, 197, 94, 0.3) 1px, transparent 1px),
                linear-gradient(90deg, rgba(34, 197, 94, 0.3) 1px, transparent 1px)
              `,
-             backgroundSize: '40px 40px'
-           }}>
+          backgroundSize: '40px 40px'
+        }}>
       </div>
       {/* Hero Section */}
       <section className="relative z-10 max-w-6xl mx-auto px-6 py-20 min-h-screen flex flex-col justify-center">
-        
+
         {/* Glitch effect elements */}
         <div className="absolute top-20 left-10 w-32 h-32 border-2 border-green-400/30 opacity-60 animate-pulse"></div>
         <div className="absolute bottom-20 right-10 w-24 h-24 border-2 border-green-500/25 opacity-45 animate-pulse delay-300"></div>
-        
+
         <div className="text-center space-y-12 relative z-10">
-          
+
           {/* Main Title with Glitch Effect */}
           <div className="mb-8 group relative">
             <h1 className="text-6xl md:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-green-300 to-green-500 uppercase tracking-wider relative">
               <span className="relative inline-block">
-                SECGIT
+                Sentinel
                 {/* Glitch overlay */}
-                <span className="absolute inset-0 text-green-400 opacity-70 animate-pulse" style={{textShadow: '2px 0 red, -2px 0 cyan'}}>
-                  SECGIT
+                <span className="absolute inset-0 text-green-400 opacity-70 animate-pulse" style={{ textShadow: '2px 0 red, -2px 0 cyan' }}>
+                  Sentinel
                 </span>
               </span>
             </h1>
-            
+
             {/* Subtitle */}
-            
+
           </div>
 
           {/* Main Description Box */}
           <div className="mt-8 md:mt-16 w-full max-w-4xl mx-auto border border-dashed border-green-400">
-            
+
             {/* Prize Header */}
             <section className="flex items-center justify-center w-full text-center bg-gradient-to-b from-green-950/90 to-green-600/50 py-6 font-bold border-b border-green-400/70 border-dashed">
               <p className="text-2xl sm:text-4xl uppercase text-white leading-6 font-upheaval">
                 TRUSTLESS OPEN SOURCE COLLABORATION
               </p>
             </section>
-            
+
             {/* Description */}
             <div className="px-8 py-8 bg-black/80">
               <p className="text-base md:text-lg text-green-100 leading-relaxed max-w-3xl mx-auto">
@@ -83,7 +83,7 @@ export default function OnboardingPage() {
                 <span className="text-green-400 font-bold uppercase">zk-based verification</span>.
               </p>
             </div>
-            
+
             {/* Action Button */}
             <div className="p-6 bg-black/60 border-t border-green-400/30 border-dashed">
               <Button
@@ -96,7 +96,7 @@ export default function OnboardingPage() {
           </div>
 
           {/* Countdown Timer */}
-          
+
 
         </div>
       </section>
@@ -108,10 +108,10 @@ export default function OnboardingPage() {
               PLATFORM STATISTICS
             </h2>
             <p className="text-lg text-green-100 max-w-2xl mx-auto">
-              Real-time metrics and statistics from the SecGIT ecosystem
+              Real-time metrics and statistics from the Sentinel ecosystem
             </p>
           </div>
-          
+
           {/* Statistics Cards Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {/* Total Repositories */}
@@ -174,29 +174,29 @@ export default function OnboardingPage() {
               HOW IT WORKS
             </h2>
             <p className="text-lg text-green-100 max-w-2xl mx-auto">
-              Get started with SecGIT in three simple steps
+              Get started with Sentinel in three simple steps
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 relative">
             {/* Connecting flow lines */}
             <div className="hidden md:block absolute top-10 left-1/6 right-1/6 h-px bg-gradient-to-r from-green-400 via-green-500 to-green-400 opacity-50"></div>
-            
+
             {/* Step 1 */}
             <div className="group text-center cursor-pointer transition-all duration-700 hover:-translate-y-2 relative">
               <div className="bg-black/40 border-2 border-green-400/50 p-8 group-hover:border-green-400 group-hover:bg-green-900/30 transition-all duration-300 backdrop-blur-sm">
-                
+
                 <div className="relative w-16 h-16 mx-auto mb-6">
                   <div className="w-16 h-16 bg-green-400 border-2 border-green-400 flex items-center justify-center font-mono text-black text-2xl font-bold">
                     01
                   </div>
                 </div>
-                
+
                 <h3 className="text-xl font-bold text-green-400 mb-4 uppercase tracking-wider font-mono">CONNECT ACCOUNTS</h3>
                 <p className="text-green-100 text-sm leading-relaxed">
                   Link your GitHub account and Polkadot wallet to access the platform with zk-based identity verification
                 </p>
-                
+
                 <div className="mt-6 h-px bg-green-400 w-full"></div>
               </div>
             </div>
@@ -204,18 +204,18 @@ export default function OnboardingPage() {
             {/* Step 2 */}
             <div className="group text-center cursor-pointer transition-all duration-700 hover:-translate-y-2 relative">
               <div className="bg-black/40 border-2 border-green-400/50 p-8 group-hover:border-green-400 group-hover:bg-green-900/30 transition-all duration-300 backdrop-blur-sm">
-                
+
                 <div className="relative w-16 h-16 mx-auto mb-6">
                   <div className="w-16 h-16 bg-green-400 border-2 border-green-400 flex items-center justify-center font-mono text-black text-2xl font-bold">
                     02
                   </div>
                 </div>
-                
+
                 <h3 className="text-xl font-bold text-green-400 mb-4 uppercase tracking-wider font-mono">STAKE & SECURE</h3>
                 <p className="text-green-100 text-sm leading-relaxed">
                   Deploy two-sided staking contracts where both repo owners and issue solvers stake tokens for fair collaboration
                 </p>
-                
+
                 <div className="mt-6 h-px bg-green-400 w-full"></div>
               </div>
             </div>
@@ -223,18 +223,18 @@ export default function OnboardingPage() {
             {/* Step 3 */}
             <div className="group text-center cursor-pointer transition-all duration-700 hover:-translate-y-2 relative">
               <div className="bg-black/40 border-2 border-green-400/50 p-8 group-hover:border-green-400 group-hover:bg-green-900/30 transition-all duration-300 backdrop-blur-sm">
-                
+
                 <div className="relative w-16 h-16 mx-auto mb-6">
                   <div className="w-16 h-16 bg-green-400 border-2 border-green-400 flex items-center justify-center font-mono text-black text-2xl font-bold">
                     03
                   </div>
                 </div>
-                
+
                 <h3 className="text-xl font-bold text-green-400 mb-4 uppercase tracking-wider font-mono">COLLABORATE & VERIFY</h3>
                 <p className="text-green-100 text-sm leading-relaxed">
                   Work with verifiable AI agents on Moonbase parachain, preventing collusion and ensuring fair rewards
                 </p>
-                
+
                 <div className="mt-6 h-px bg-green-400 w-full"></div>
               </div>
             </div>
@@ -243,19 +243,19 @@ export default function OnboardingPage() {
       </section>
 
       {/* CTA Section - Snow on Fig */}
-      
+
 
       {/* Footer */}
       <footer className="bg-black/20 py-12 border-t border-green-400/30 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid md:grid-cols-3 gap-8 mb-8">
             <div>
-              <h3 className="text-2xl font-bold text-green-400 mb-4 font-upheaval uppercase">SECGIT</h3>
+              <h3 className="text-2xl font-bold text-green-400 mb-4 font-upheaval uppercase">Sentinel</h3>
               <p className="text-green-100 text-sm">
                 Blockchain-backed platform deployed on Polkadot&apos;s Moonbase parachain. Making open-source collaboration trustless, fair, and secure with verifiable AI and zk-based identity verification.
               </p>
             </div>
-            
+
             <div>
               <h4 className="text-green-400 mb-4 font-upheaval uppercase text-sm font-bold">PLATFORM</h4>
               <ul className="space-y-2">
@@ -265,7 +265,7 @@ export default function OnboardingPage() {
                 <li><a href="#" className="text-green-100 hover:text-green-400 text-sm transition-colors duration-300">ANALYTICS</a></li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="text-green-400 mb-4 font-upheaval uppercase text-sm font-bold">RESOURCES</h4>
               <ul className="space-y-2">
@@ -276,12 +276,12 @@ export default function OnboardingPage() {
               </ul>
             </div>
           </div>
-          
+
           <div className="pt-8 border-t border-green-400/20">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="text-green-400 font-upheaval font-bold text-lg">SECGIT</div>
+              <div className="text-green-400 font-upheaval font-bold text-lg">Sentinel</div>
               <div className="text-green-100 text-sm">
-               
+
               </div>
             </div>
           </div>

@@ -1,20 +1,31 @@
-// Deploying 
+// Deploying to Ethereum Sepolia
 
-IronJam11 contracts (main) % forge script script/Deploy.s.sol:DeployDecentralizedIssueTracker \
-  --rpc-url celo \                            
-  --broadcast \                                                
-  --verify \                                              
-  --verifier blockscout \
-  --verifier-url https://celo-sepolia.blockscout.com/api \
-  -vvvv 
+forge script script/Deploy.s.sol:DeployDecentralizedIssueTracker \
+  --rpc-url sepolia \
+  --broadcast \
+  --verify \
+  --etherscan-api-key $ETHERSCAN_API_KEY \
+  -vvvv
 
+// Alternative deployment without verification (faster)
+forge script script/Deploy.s.sol:DeployDecentralizedIssueTracker \
+  --rpc-url sepolia \
+  --broadcast \
+  -vvvv
 
-// Verify 
+// Manual verification after deployment
+forge verify-contract \
+  <CONTRACT_ADDRESS> \
+  src/DecentralizedIssueTracker.sol:DecentralizedIssueTracker \
+  --rpc-url sepolia \
+  --etherscan-api-key $ETHERSCAN_API_KEY \
+  --constructor-args "0x000000000000000000000000000000000000dead" \
+  -vvvv
 
-forge verify-contract \ 
-0x431Fb2E732D863934d49ae1e2799E802a9a18e2b \ 
-alizedIssueTracker.sol:DecentralizedIssueTracker \ 
---rpc-url https://forno.celo-sepolia.celo-testnet.org/ \ 
---verifier blockscout \ --verifier-url https://celo-sepolia.blockscout.com/api \ 
---constructor-args "0x000000000000000000000000000000000000dead" \ 
--vvvv
+// Using public RPC (no API key needed)
+forge script script/Deploy.s.sol:DeployDecentralizedIssueTracker \
+  --rpc-url https://rpc.sepolia.org \
+  --broadcast \
+  --verify \
+  --etherscan-api-key $ETHERSCAN_API_KEY \
+  -vvvv

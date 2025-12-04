@@ -3,17 +3,17 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
 import { parseEther } from "viem";
 import { GitHubAPI, createDifficultyLabels } from "@/lib/github-api";
 import { CONTRACT_ABI } from '../config/abi';
-import { 
-  Plus, 
-  GitBranch, 
-  Clock, 
-  DollarSign, 
-  AlertCircle, 
-  CheckCircle2, 
+import {
+  Plus,
+  GitBranch,
+  Clock,
+  DollarSign,
+  AlertCircle,
+  CheckCircle2,
   X,
   User,
   Calendar,
@@ -89,14 +89,14 @@ const DIFFICULTY_CONFIG = {
     description: "Simple bug fixes, documentation updates"
   },
   [Difficulty.MEDIUM]: {
-    label: "Medium", 
+    label: "Medium",
     color: "bg-[#7CC0FF]",
     duration: 30,
     description: "Feature implementations, moderate complexity"
   },
   [Difficulty.HARD]: {
     label: "Hard",
-    color: "bg-[#FF9A51]", 
+    color: "bg-[#FF9A51]",
     duration: 150,
     description: "Complex features, architectural changes"
   }
@@ -122,7 +122,7 @@ export default function CreateIssuePage() {
               'Accept': 'application/vnd.github.v3+json',
             },
           });
-          
+
           if (userResponse.ok) {
             const scopes = userResponse.headers.get('X-OAuth-Scopes');
             console.log('Token scopes check:', scopes);
@@ -136,7 +136,7 @@ export default function CreateIssuePage() {
 
     checkTokenScopes();
   }, [session]);
-  
+
   // State management
   const [githubIssues, setGithubIssues] = useState<GitHubIssue[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -146,14 +146,14 @@ export default function CreateIssuePage() {
   const [loading, setLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedRepo, setSelectedRepo] = useState<string>(""); // Format: "owner/repo"
-  
+
   // AI Analysis states
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showSuggestion, setShowSuggestion] = useState(false);
   const [approvingIssue, setApprovingIssue] = useState(false);
   const [hasRepoScope, setHasRepoScope] = useState<boolean | null>(null);
-  
+
   // Form state
   const [formData, setFormData] = useState({
     title: "",
@@ -163,7 +163,7 @@ export default function CreateIssuePage() {
     bountyAmount: "0.1",
     customDurations: {
       easy: 0,
-      medium: 0, 
+      medium: 0,
       hard: 0
     },
     minimumCompletionPercentage: 80
@@ -179,6 +179,49 @@ export default function CreateIssuePage() {
   // Store the created GitHub issue temporarily until blockchain confirmation
   const [pendingGitHubIssue, setPendingGitHubIssue] = useState<GitHubIssue | null>(null);
 
+  // Verification state
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  // Check if user is verified
+  const { data: isVerified, refetch: refetchVerification } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: CONTRACT_ABI,
+    functionName: 'isAddressVerified',
+    args: address ? [address] : undefined,
+    query: {
+      enabled: !!address,
+    }
+  });
+
+  // Verification function
+  const handleVerification = async () => {
+    if (!isConnected || !address) {
+      alert('Please connect your wallet first');
+      return;
+    }
+
+    setIsVerifying(true);
+    try {
+      // Generate a simple nullifier (in production, this would come from Self.xyz)
+      const nullifier = BigInt(Math.floor(Math.random() * 1000000000) + Date.now());
+
+      console.log('Storing nullifier:', nullifier.toString());
+
+      writeContract({
+        address: CONTRACT_ADDRESS,
+        abi: CONTRACT_ABI,
+        functionName: 'storeNullifier',
+        args: [nullifier],
+        gas: BigInt(500000), // Lower gas for simple function
+      });
+
+    } catch (error) {
+      console.error('Error during verification:', error);
+      alert('Verification failed. Please try again.');
+      setIsVerifying(false);
+    }
+  };
+
   // Fetch user repositories only when needed (removed automatic fetching)
 
   // Fetch GitHub issues
@@ -191,12 +234,20 @@ export default function CreateIssuePage() {
   // Handle transaction success/failure
   useEffect(() => {
     if (isTransactionSuccess) {
+      // Check if this was a verification transaction
+      if (isVerifying) {
+        setIsVerifying(false);
+        refetchVerification(); // Refresh verification status
+        alert('Account verified successfully! You can now create bounties. 🎉');
+        return;
+      }
+
       // If we created a new GitHub issue, add it to the list
       if (pendingGitHubIssue) {
         console.log('Transaction successful, adding new issue to list');
         setGithubIssues(prev => [pendingGitHubIssue, ...prev]);
       }
-      
+
       // Transaction succeeded - close form and reset
       setShowCreateForm(false);
       setFormData({
@@ -211,16 +262,16 @@ export default function CreateIssuePage() {
       setPendingGitHubIssue(null);
       alert('Bounty created successfully! 🎉');
     }
-  }, [isTransactionSuccess, pendingGitHubIssue]);
+  }, [isTransactionSuccess, pendingGitHubIssue, isVerifying, refetchVerification]);
 
   // Handle transaction/contract errors
   useEffect(() => {
     if (contractError || transactionError) {
       console.error('Transaction failed:', contractError || transactionError);
-      
+
       let errorMessage = 'Failed to create bounty on blockchain. ';
       const error = contractError || transactionError;
-      
+
       if (error?.message?.includes('User not verified')) {
         errorMessage += 'Please verify your account first.';
       } else if (error?.message?.includes('Insufficient payment')) {
@@ -230,7 +281,7 @@ export default function CreateIssuePage() {
       } else {
         errorMessage += error?.message || 'Please try again.';
       }
-      
+
       alert(errorMessage);
       setPendingGitHubIssue(null);
     }
@@ -238,19 +289,19 @@ export default function CreateIssuePage() {
 
   const fetchRepositories = async () => {
     if (!session?.accessToken || repositoriesLoading) return;
-    
+
     setRepositoriesLoading(true);
     try {
       const githubApi = new GitHubAPI(session.accessToken);
       const allRepos = await githubApi.getUserRepos();
       console.log(`Found ${allRepos.length} repositories from API`);
-      
+
       // For now, let's not verify each repository individually as it's slow
       // Instead, rely on the getUserRepos method to return only accessible repos
       setRepositories(allRepos);
       setRepositoriesLoaded(true);
       console.log(`Loaded ${allRepos.length} repositories for selection`);
-      
+
       // Log some repository info for debugging
       if (allRepos.length > 0) {
         console.log('Sample repositories:', allRepos.slice(0, 3).map(repo => ({
@@ -275,7 +326,7 @@ export default function CreateIssuePage() {
 
   const fetchGitHubIssues = async () => {
     if (!session?.accessToken || !selectedRepo) return;
-    
+
     setLoading(true);
     try {
       const githubApi = new GitHubAPI(session.accessToken);
@@ -291,24 +342,24 @@ export default function CreateIssuePage() {
 
   const createGitHubIssue = async () => {
     if (!session?.accessToken || !selectedRepo) return null;
-    
+
     try {
       const githubApi = new GitHubAPI(session.accessToken);
       const [owner, repo] = selectedRepo.split('/');
-      
+
       // Create difficulty labels if they don't exist
       await createDifficultyLabels(session.accessToken, owner, repo);
-      
+
       const newIssue = await githubApi.createIssue(owner, repo, {
         title: formData.title,
         body: formData.description,
         labels: [
           `difficulty:${DIFFICULTY_CONFIG[formData.difficulty].label.toLowerCase()}`,
           'bounty',
-          'secgit'
+          'Sentinel'
         ]
       });
-      
+
       return newIssue;
     } catch (error) {
       console.error('Error creating GitHub issue:', error);
@@ -337,8 +388,10 @@ export default function CreateIssuePage() {
 
       if (response.ok) {
         const result: AnalysisResult = await response.json();
+        console.log('✅ Analysis result received:', result);
         setAnalysisResult(result);
         setShowSuggestion(true);
+        alert('✅ Analysis complete! Check the AI Suggested Issue section below.');
       } else {
         console.error('Analysis failed:', response.statusText);
         alert('Analysis failed. Please try again.');
@@ -358,11 +411,11 @@ export default function CreateIssuePage() {
     try {
       const githubApi = new GitHubAPI(session.accessToken);
       const [owner, repo] = selectedRepo.split('/');
-      
+
       console.log('Creating issue for:', { owner, repo, selectedRepo });
       console.log('Session user:', session.user);
       console.log('Access token available:', !!session.accessToken);
-      
+
       // Test token scopes
       try {
         const userResponse = await fetch('https://api.github.com/user', {
@@ -371,11 +424,11 @@ export default function CreateIssuePage() {
             'Accept': 'application/vnd.github.v3+json',
           },
         });
-        
+
         if (userResponse.ok) {
           const scopes = userResponse.headers.get('X-OAuth-Scopes');
           console.log('Token scopes:', scopes);
-          
+
           if (!scopes?.includes('repo')) {
             console.warn('Token does not have repo scope - cannot create issues');
             throw new Error('❌ Insufficient GitHub permissions.\n\nYour GitHub token does not have the required "repo" scope to create issues.\n\n🔧 To fix this:\n1. Sign out of GitHub in the navbar\n2. Sign back in to get updated permissions\n3. The app will now request the correct permissions\n\nNote: You may need to clear your browser cache or restart the app.');
@@ -384,32 +437,32 @@ export default function CreateIssuePage() {
       } catch (scopeError) {
         console.warn('Could not check token scopes:', scopeError);
       }
-      
+
       // Check if the user has write access to the repository
       try {
         // First, try to get repository info to verify access
         const repoUrl = `https://api.github.com/repos/${owner}/${repo}`;
         console.log('Checking repository access:', repoUrl);
-        
+
         const repoInfo = await fetch(repoUrl, {
           headers: {
             'Authorization': `Bearer ${session.accessToken}`,
             'Accept': 'application/vnd.github.v3+json',
           },
         });
-        
+
         console.log('Repository check response:', {
           status: repoInfo.status,
           statusText: repoInfo.statusText,
           ok: repoInfo.ok
         });
-        
+
         if (!repoInfo.ok) {
           const errorData = await repoInfo.json().catch(() => ({}));
           console.error('Repository access error details:', errorData);
           throw new Error(`Repository not found or no access: ${repoInfo.statusText} (${repoInfo.status})`);
         }
-        
+
         const repoData = await repoInfo.json();
         console.log('Repository permissions:', repoData.permissions);
         console.log('Repository info:', {
@@ -418,22 +471,22 @@ export default function CreateIssuePage() {
           private: repoData.private,
           owner: repoData.owner?.login
         });
-        
+
         if (!repoData.permissions?.push) {
           throw new Error(`You don&apos;t have write access to ${selectedRepo}. You can only create issues in repositories you own or have write access to.`);
         }
-        
+
         console.log('✅ Repository access verified - proceeding with issue creation');
       } catch (repoError) {
         console.error('Repository access error:', repoError);
-        
+
         // Provide specific guidance based on the error
         if (repoError instanceof Error && repoError.message.includes('404')) {
           throw new Error(`❌ Repository &quot;${selectedRepo}&quot; not found.\n\nPossible issues:\n• Repository doesn&apos;t exist\n• Repository is private and you don&apos;t have access\n• Repository name has changed\n• You&apos;re not logged in with the correct GitHub account\n\nPlease verify the repository exists and you have access to it.`);
         }
         throw repoError;
       }
-      
+
       // Create difficulty labels if they don't exist (only if we have write access)
       try {
         await createDifficultyLabels(session.accessToken, owner, repo);
@@ -441,7 +494,7 @@ export default function CreateIssuePage() {
         console.warn('Could not create labels:', labelError);
         // Continue anyway - labels might already exist
       }
-      
+
       // Map difficulty string to enum (for future use if needed)
       // const difficultyMap: { [key: string]: Difficulty } = {
       //   'Easy': Difficulty.EASY,
@@ -449,13 +502,13 @@ export default function CreateIssuePage() {
       //   'Hard': Difficulty.HARD
       // };
       // const difficulty = difficultyMap[analysisResult.synthesized_analysis.difficulty] || Difficulty.MEDIUM;
-      
+
       // Create the GitHub issue with AI-suggested content
       const baseLabels = [
         ...(Array.isArray(analysisResult.github_payload.labels) ? analysisResult.github_payload.labels : []),
         `difficulty:${analysisResult.synthesized_analysis.difficulty.toLowerCase()}`,
         'bounty',
-        'secgit',
+        'Sentinel',
         'ai-generated'
       ];
 
@@ -469,18 +522,18 @@ export default function CreateIssuePage() {
 
       const newIssue = await githubApi.createIssue(owner, repo, {
         title: analysisResult.github_payload.title || 'Generated Issue',
-        body: analysisResult.github_payload.body || 'This issue was generated by SecGIT.',
+        body: analysisResult.github_payload.body || 'This issue was generated by Sentinel.',
         labels: labels
       });
 
       if (newIssue) {
         // Update the issues list
         setGithubIssues(prev => [newIssue, ...prev]);
-        
+
         // Hide the suggestion
         setShowSuggestion(false);
         setAnalysisResult(null);
-        
+
         alert('Issue created successfully!');
       }
     } catch (error: unknown) {
@@ -496,22 +549,39 @@ export default function CreateIssuePage() {
     if (!isConnected || !session) return;
 
     try {
-      // Create bounty on blockchain with simplified parameters
+      // Create bounty on blockchain with all required parameters
       const bountyInWei = parseEther(formData.bountyAmount);
-      
+
       console.log('Creating issue with difficulty:', formData.difficulty);
       console.log('Bounty amount (wei):', bountyInWei.toString());
-      
+
+      // Prepare all required parameters for the smart contract
+      const githubUrl = formData.githubUrl || "https://github.com/placeholder/issue";
+      const description = formData.description || "Issue created via Sentinel platform";
+      const easyDuration = formData.customDurations.easy || 7; // days
+      const mediumDuration = formData.customDurations.medium || 14; // days  
+      const hardDuration = formData.customDurations.hard || 21; // days
+      const minimumCompletionPercentage = formData.minimumCompletionPercentage || 80;
+
       writeContract({
         address: CONTRACT_ADDRESS,
         abi: CONTRACT_ABI,
         functionName: 'createIssue',
-        args: [formData.difficulty],
+        args: [
+          githubUrl,
+          description,
+          formData.difficulty,
+          BigInt(easyDuration),
+          BigInt(mediumDuration),
+          BigInt(hardDuration),
+          BigInt(minimumCompletionPercentage)
+        ],
         value: bountyInWei,
+        gas: BigInt(3000000), // Set reasonable gas limit (3M gas)
       });
-      
+
       console.log('Issue creation transaction submitted successfully');
-      
+
     } catch (error) {
       console.error('Error creating bounty:', error);
       alert('Failed to create bounty. Please try again.');
@@ -565,7 +635,7 @@ export default function CreateIssuePage() {
   }
 
   return (
-    <div 
+    <div
       className="min-h-screen bg-black font-upheaval relative"
       style={{
         backgroundImage: "url('/background.webp')",
@@ -577,14 +647,14 @@ export default function CreateIssuePage() {
     >
       {/* Background overlays */}
       <div className="absolute inset-0 bg-black/30 z-0"></div>
-      <div className="absolute inset-0 opacity-40 z-0" 
-           style={{
-             backgroundImage: `
+      <div className="absolute inset-0 opacity-40 z-0"
+        style={{
+          backgroundImage: `
                linear-gradient(rgba(34, 197, 94, 0.3) 1px, transparent 1px),
                linear-gradient(90deg, rgba(34, 197, 94, 0.3) 1px, transparent 1px)
              `,
-             backgroundSize: '40px 40px'
-           }}>
+          backgroundSize: '40px 40px'
+        }}>
       </div>
 
       {/* Header */}
@@ -596,11 +666,11 @@ export default function CreateIssuePage() {
               Create blockchain-backed issues with bounties and manage your repository&apos;s development workflow
             </p>
           </div>
-          
+
           <div className="flex gap-4">
             {/* Repository Selector */}
             <div className="flex flex-col">
-              <select 
+              <select
                 value={selectedRepo}
                 onChange={(e) => setSelectedRepo(e.target.value)}
                 onClick={handleRepositoryDropdownClick}
@@ -610,8 +680,8 @@ export default function CreateIssuePage() {
               >
                 <option value="">
                   {repositoriesLoading ? "LOADING REPOSITORIES..." :
-                   !repositoriesLoaded ? "CLICK TO LOAD REPOSITORIES..." : 
-                   repositories.length === 0 ? "NO REPOSITORIES FOUND" : "SELECT REPOSITORY"}
+                    !repositoriesLoaded ? "CLICK TO LOAD REPOSITORIES..." :
+                      repositories.length === 0 ? "NO REPOSITORIES FOUND" : "SELECT REPOSITORY"}
                 </option>
                 {repositories.map((repo) => (
                   <option key={repo.id} value={repo.full_name}>
@@ -622,15 +692,15 @@ export default function CreateIssuePage() {
               <p className="text-xs text-green-100 mt-1 opacity-75 font-upheaval">
                 {repositoriesLoading
                   ? "FETCHING YOUR REPOSITORIES FROM GITHUB..."
-                  : !repositoriesLoaded 
-                    ? "CLICK DROPDOWN TO LOAD YOUR REPOSITORIES" 
-                    : repositories.length === 0 
+                  : !repositoriesLoaded
+                    ? "CLICK DROPDOWN TO LOAD YOUR REPOSITORIES"
+                    : repositories.length === 0
                       ? "YOU NEED REPOSITORIES WITH WRITE ACCESS TO CREATE ISSUES"
                       : "ONLY SHOWING REPOSITORIES WHERE YOU CAN CREATE ISSUES"
                 }
               </p>
             </div>
-            
+
             <Button
               onClick={analyzeRepository}
               disabled={!selectedRepo || isAnalyzing || hasRepoScope === false}
@@ -643,7 +713,7 @@ export default function CreateIssuePage() {
               )}
               {isAnalyzing ? 'ANALYZING...' : 'AI ANALYZE REPO'}
             </Button>
-            
+
             <Button
               onClick={() => setShowCreateForm(true)}
               disabled={hasRepoScope === false}
@@ -655,6 +725,43 @@ export default function CreateIssuePage() {
           </div>
         </div>
 
+        {/* Account Verification Section */}
+        {!isVerified && (
+          <div className="bg-yellow-500/20 border-2 border-yellow-400 p-6 mb-8 backdrop-blur-sm">
+            <div className="flex items-start gap-4">
+              <AlertCircle className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <h3 className="text-yellow-400 font-bold text-lg mb-2 font-upheaval uppercase">Account Verification Required</h3>
+                <p className="text-yellow-100 mb-4">
+                  You need to verify your account before creating bounties. This helps prevent spam and ensures platform security.
+                </p>
+                <Button
+                  onClick={handleVerification}
+                  disabled={isVerifying || isContractLoading || isTransactionLoading}
+                  className="bg-yellow-400 text-black px-6 py-2 border-2 border-yellow-400 font-bold font-upheaval uppercase tracking-wider hover:bg-yellow-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {(isVerifying || isContractLoading || isTransactionLoading) ? (
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="w-5 h-5 mr-2" />
+                  )}
+                  {(isVerifying || isContractLoading || isTransactionLoading) ? 'VERIFYING...' : 'VERIFY ACCOUNT'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Account Verified Success */}
+        {isVerified && (
+          <div className="bg-green-500/20 border-2 border-green-400 p-4 mb-8 backdrop-blur-sm">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-green-400" />
+              <span className="text-green-400 font-bold font-upheaval uppercase">Account Verified ✓</span>
+            </div>
+          </div>
+        )}
+
         {/* Token Scope Warning */}
         {hasRepoScope === false && (
           <div className="bg-red-500/20 border-2 border-red-400 p-6 mb-8 backdrop-blur-sm">
@@ -663,7 +770,7 @@ export default function CreateIssuePage() {
               <div>
                 <h3 className="text-xl font-bold text-red-400 mb-2 font-upheaval uppercase">⚠️ GITHUB PERMISSIONS REQUIRED</h3>
                 <p className="text-red-100 mb-4">
-                  Your GitHub token doesn&apos;t have the required permissions to create issues. 
+                  Your GitHub token doesn&apos;t have the required permissions to create issues.
                   The app needs &quot;repo&quot; scope to create issues and manage labels.
                 </p>
                 <div className="bg-black/40 border-2 border-red-400/50 p-4 mb-4 backdrop-blur-sm">
@@ -671,7 +778,7 @@ export default function CreateIssuePage() {
                   <p className="text-red-100 font-upheaval"><strong>REQUIRED SCOPES:</strong> read:user, user:email, repo</p>
                 </div>
                 <p className="text-red-100 font-upheaval">
-                  <strong>TO FIX THIS:</strong> Sign out from GitHub in the navbar above, then sign back in. 
+                  <strong>TO FIX THIS:</strong> Sign out from GitHub in the navbar above, then sign back in.
                   The app will request the updated permissions automatically.
                 </p>
               </div>
@@ -691,7 +798,7 @@ export default function CreateIssuePage() {
                 <X className="w-4 h-4" />
               </Button>
             </div>
-            
+
             {/* Analysis Summary */}
             <div className="bg-black/80 border border-green-400 p-6 mb-6 backdrop-blur-sm">
               <h3 className="text-xl font-upheaval text-green-400 mb-2">AI ANALYSIS REPORT</h3>
@@ -708,33 +815,31 @@ export default function CreateIssuePage() {
               {/* Issue Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex flex-wrap gap-2">
-                  <div className={`${
-                    analysisResult.synthesized_analysis.difficulty === 'Easy' ? 'bg-green-600' :
-                    analysisResult.synthesized_analysis.difficulty === 'Medium' ? 'bg-yellow-600' :
-                    'bg-red-600'
-                  } border border-green-400 px-2 py-1`}>
+                  <div className={`${analysisResult.synthesized_analysis.difficulty === 'Easy' ? 'bg-green-600' :
+                      analysisResult.synthesized_analysis.difficulty === 'Medium' ? 'bg-yellow-600' :
+                        'bg-red-600'
+                    } border border-green-400 px-2 py-1`}>
                     <span className="text-sm font-mono text-black">{analysisResult.synthesized_analysis.difficulty}</span>
                   </div>
-                  <div className={`${
-                    analysisResult.synthesized_analysis.priority === 'Low' ? 'bg-green-600' :
-                    analysisResult.synthesized_analysis.priority === 'Medium' ? 'bg-yellow-600' :
-                    'bg-red-600'
-                  } border border-green-400 px-2 py-1`}>
+                  <div className={`${analysisResult.synthesized_analysis.priority === 'Low' ? 'bg-green-600' :
+                      analysisResult.synthesized_analysis.priority === 'Medium' ? 'bg-yellow-600' :
+                        'bg-red-600'
+                    } border border-green-400 px-2 py-1`}>
                     <span className="text-sm font-mono text-black">{analysisResult.synthesized_analysis.priority}</span>
                   </div>
                 </div>
               </div>
-              
+
               {/* Issue Title */}
               <h3 className="text-xl font-upheaval text-green-400 mb-4">
                 {analysisResult.github_payload.title}
               </h3>
-              
+
               {/* Issue Description */}
               <div className="text-green-300 mb-4 font-mono text-sm">
                 <p>{analysisResult.synthesized_analysis.body}</p>
               </div>
-              
+
               {/* Technical Requirements */}
               {analysisResult.synthesized_analysis.technical_requirements.length > 0 && (
                 <div className="mb-4">
@@ -746,7 +851,7 @@ export default function CreateIssuePage() {
                   </ul>
                 </div>
               )}
-              
+
               {/* Acceptance Criteria */}
               {analysisResult.synthesized_analysis.acceptance_criteria.length > 0 && (
                 <div className="mb-6">
@@ -758,7 +863,7 @@ export default function CreateIssuePage() {
                   </ul>
                 </div>
               )}
-              
+
               {/* Issue Details */}
               <div className="flex flex-wrap gap-4 mb-6 text-sm font-mono text-green-300">
                 <div className="flex items-center gap-2">
@@ -770,7 +875,7 @@ export default function CreateIssuePage() {
                   <span>{analysisResult.synthesized_analysis.labels.join(', ')}</span>
                 </div>
               </div>
-              
+
               {/* Approve Button */}
               <Button
                 onClick={approveAndCreateIssue}
@@ -804,7 +909,7 @@ export default function CreateIssuePage() {
             {githubIssues.map((issue) => {
               const difficulty = getDifficultyFromLabels(issue.labels);
               const config = DIFFICULTY_CONFIG[difficulty];
-              
+
               return (
                 <div
                   key={issue.id}
@@ -827,17 +932,17 @@ export default function CreateIssuePage() {
                       )}
                     </div>
                   </div>
-                  
+
                   {/* Issue Title */}
                   <h3 className="text-lg font-upheaval text-green-400 mb-3 line-clamp-2">
                     {issue.title}
                   </h3>
-                  
+
                   {/* Issue Description */}
                   <p className="text-sm font-mono text-green-300 mb-4 line-clamp-3">
                     {issue.body || "No description provided"}
                   </p>
-                  
+
                   {/* Labels */}
                   {issue.labels.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-4">
@@ -857,7 +962,7 @@ export default function CreateIssuePage() {
                       )}
                     </div>
                   )}
-                  
+
                   {/* Issue Meta */}
                   <div className="flex items-center justify-between text-green-300 mb-4">
                     <div className="flex items-center gap-2">
@@ -869,7 +974,7 @@ export default function CreateIssuePage() {
                       <span className="text-sm font-mono">{formatDate(issue.created_at)}</span>
                     </div>
                   </div>
-                  
+
                   {/* Bounty Info */}
                   <div className="bg-green-400/10 border border-green-400 p-3 mb-4">
                     <div className="flex items-center justify-between">
@@ -881,7 +986,7 @@ export default function CreateIssuePage() {
                     </div>
                     <p className="text-xs font-mono text-green-300 mt-1">No active bounty - Click &quot;Add Bounty&quot; to stake DEV</p>
                   </div>
-                  
+
                   {/* Actions */}
                   <div className="flex gap-2">
                     <Button
@@ -945,7 +1050,7 @@ export default function CreateIssuePage() {
                 <X className="w-5 h-5" />
               </Button>
             </div>
-            
+
             {/* Modal Content */}
             <div className="p-6 space-y-6">
               {/* Issue Title */}
@@ -959,7 +1064,7 @@ export default function CreateIssuePage() {
                   placeholder="Brief description of the issue"
                 />
               </div>
-              
+
               {/* Issue Description */}
               <div>
                 <label className="text-sm font-mono text-green-400 mb-2 block">DESCRIPTION *</label>
@@ -971,7 +1076,7 @@ export default function CreateIssuePage() {
                   placeholder="Detailed description of the issue, requirements, and acceptance criteria"
                 />
               </div>
-              
+
               {/* Difficulty Selection */}
               <div>
                 <label className="text-sm font-mono text-green-400 mb-2 block">DIFFICULTY LEVEL</label>
@@ -980,9 +1085,8 @@ export default function CreateIssuePage() {
                     <button
                       key={key}
                       onClick={() => setFormData(prev => ({ ...prev, difficulty: Number(key) as Difficulty }))}
-                      className={`bg-black border ${
-                        formData.difficulty === Number(key) ? 'border-green-300' : 'border-green-400'
-                      } p-4 text-left transition-all hover:border-green-300`}
+                      className={`bg-black border ${formData.difficulty === Number(key) ? 'border-green-300' : 'border-green-400'
+                        } p-4 text-left transition-all hover:border-green-300`}
                     >
                       <div className="text-lg font-upheaval text-green-400 mb-1">{config.label}</div>
                       <div className="text-sm font-mono text-green-300 mb-2">{config.description}</div>
@@ -994,7 +1098,7 @@ export default function CreateIssuePage() {
                   ))}
                 </div>
               </div>
-              
+
               {/* Bounty Amount */}
               <div>
                 <label className="text-sm font-mono text-green-400 mb-2 block">BOUNTY AMOUNT (DEV) *</label>
@@ -1016,7 +1120,7 @@ export default function CreateIssuePage() {
                   Minimum: 0.01 DEV (≈ $0.50)
                 </p>
               </div>
-              
+
               {/* Completion Percentage */}
               <div>
                 <label className="text-sm font-mono text-green-400 mb-2 block">MINIMUM COMPLETION FOR STAKE RETURN (%)</label>
@@ -1034,7 +1138,7 @@ export default function CreateIssuePage() {
                 </p>
               </div>
             </div>
-            
+
             {/* Modal Footer */}
             <div className="bg-green-400/10 border-t border-green-400 p-6 flex gap-4">
               <Button

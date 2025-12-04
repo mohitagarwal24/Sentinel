@@ -1,311 +1,1110 @@
 export const CONTRACT_ABI = [
 	{
-		"inputs": [],
-		"name": "AlreadyAttempted",
-		"type": "error"
-	},
-	{
+		"type": "constructor",
 		"inputs": [
 			{
-				"internalType": "enum SimpleIssueTracker.Difficulty",
-				"name": "_difficulty",
-				"type": "uint8"
+				"name": "_aiAgentAddress",
+				"type": "address",
+				"internalType": "address"
 			}
 		],
-		"name": "createIssue",
+		"stateMutability": "nonpayable"
+	},
+	{
+		"type": "function",
+		"name": "AI_AGENT_ADDRESS",
+		"inputs": [],
 		"outputs": [
 			{
-				"internalType": "uint256",
 				"name": "",
-				"type": "uint256"
+				"type": "address",
+				"internalType": "address"
 			}
 		],
-		"stateMutability": "payable",
-		"type": "function"
+		"stateMutability": "view"
 	},
 	{
+		"type": "function",
+		"name": "AI_SERVICE_FEE",
 		"inputs": [],
-		"name": "CreatorCannotTake",
-		"type": "error"
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"stateMutability": "view"
 	},
 	{
+		"type": "function",
+		"name": "DEFAULT_EASY_DURATION",
 		"inputs": [],
-		"name": "InvalidBounty",
-		"type": "error"
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"stateMutability": "view"
 	},
 	{
+		"type": "function",
+		"name": "DEFAULT_HARD_DURATION",
 		"inputs": [],
-		"name": "InvalidStake",
-		"type": "error"
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"stateMutability": "view"
 	},
 	{
+		"type": "function",
+		"name": "DEFAULT_MEDIUM_DURATION",
 		"inputs": [],
-		"name": "InvalidURL",
-		"type": "error"
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"stateMutability": "view"
 	},
 	{
+		"type": "function",
+		"name": "MAX_CONTRIBUTOR_STAKE_PERCENTAGE",
 		"inputs": [],
-		"name": "IssueAlreadyAssigned",
-		"type": "error"
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"stateMutability": "view"
 	},
 	{
+		"type": "function",
+		"name": "MIN_CONTRIBUTOR_STAKE_PERCENTAGE",
 		"inputs": [],
-		"name": "IssueNotFound",
-		"type": "error"
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"stateMutability": "view"
 	},
 	{
-		"anonymous": false,
+		"type": "function",
+		"name": "addressToNullifier",
 		"inputs": [
 			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "issueId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "contributor",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "deadline",
-				"type": "uint256"
+				"name": "",
+				"type": "address",
+				"internalType": "address"
 			}
 		],
-		"name": "IssueAssigned",
-		"type": "event"
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"stateMutability": "view"
 	},
 	{
-		"anonymous": false,
+		"type": "function",
+		"name": "claimExpiredIssue",
 		"inputs": [
 			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "issueId",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "creator",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "bounty",
-				"type": "uint256"
+				"name": "_issueId",
+				"type": "uint256",
+				"internalType": "uint256"
 			}
 		],
-		"name": "IssueCreated",
-		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_id",
-				"type": "uint256"
-			}
-		],
-		"name": "takeIssue",
 		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
+		"stateMutability": "nonpayable"
 	},
 	{
-		"inputs": [],
-		"name": "getAllIssues",
-		"outputs": [
-			{
-				"components": [
-					{
-						"internalType": "address",
-						"name": "creator",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "assignedTo",
-						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "bounty",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "createdAt",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "deadline",
-						"type": "uint256"
-					},
-					{
-						"internalType": "enum SimpleIssueTracker.Difficulty",
-						"name": "difficulty",
-						"type": "uint8"
-					},
-					{
-						"internalType": "bool",
-						"name": "isCompleted",
-						"type": "bool"
-					}
-				],
-				"internalType": "struct SimpleIssueTracker.Issue[]",
-				"name": "",
-				"type": "tuple[]"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
+		"type": "function",
+		"name": "completeIssue",
 		"inputs": [
 			{
-				"internalType": "uint256",
-				"name": "_id",
-				"type": "uint256"
+				"name": "_issueId",
+				"type": "uint256",
+				"internalType": "uint256"
 			}
 		],
+		"outputs": [],
+		"stateMutability": "nonpayable"
+	},
+	{
+		"type": "function",
+		"name": "contributorAssignedIssues",
+		"inputs": [
+			{
+				"name": "",
+				"type": "address",
+				"internalType": "address"
+			},
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"stateMutability": "view"
+	},
+	{
+		"type": "function",
+		"name": "contributorStakes",
+		"inputs": [
+			{
+				"name": "",
+				"type": "address",
+				"internalType": "address"
+			}
+		],
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"stateMutability": "view"
+	},
+	{
+		"type": "function",
+		"name": "createIssue",
+		"inputs": [
+			{
+				"name": "_githubIssueUrl",
+				"type": "string",
+				"internalType": "string"
+			},
+			{
+				"name": "_description",
+				"type": "string",
+				"internalType": "string"
+			},
+			{
+				"name": "_difficulty",
+				"type": "uint8",
+				"internalType": "enum DecentralizedIssueTracker.Difficulty"
+			},
+			{
+				"name": "_easyDuration",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "_mediumDuration",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "_hardDuration",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "_minimumBountyCompletionPercentageForStakeReturn",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"stateMutability": "payable"
+	},
+	{
+		"type": "function",
+		"name": "creatorIssues",
+		"inputs": [
+			{
+				"name": "",
+				"type": "address",
+				"internalType": "address"
+			},
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"stateMutability": "view"
+	},
+	{
+		"type": "function",
+		"name": "getContractBalance",
+		"inputs": [],
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"stateMutability": "view"
+	},
+	{
+		"type": "function",
+		"name": "getContributorAssignedIssues",
+		"inputs": [
+			{
+				"name": "_contributor",
+				"type": "address",
+				"internalType": "address"
+			}
+		],
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256[]",
+				"internalType": "uint256[]"
+			}
+		],
+		"stateMutability": "view"
+	},
+	{
+		"type": "function",
+		"name": "getCreatorIssues",
+		"inputs": [
+			{
+				"name": "_creator",
+				"type": "address",
+				"internalType": "address"
+			}
+		],
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256[]",
+				"internalType": "uint256[]"
+			}
+		],
+		"stateMutability": "view"
+	},
+	{
+		"type": "function",
+		"name": "getIssueDurations",
+		"inputs": [
+			{
+				"name": "_issueId",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"stateMutability": "view"
+	},
+	{
+		"type": "function",
 		"name": "getIssueInfo",
+		"inputs": [
+			{
+				"name": "_issueId",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
 		"outputs": [
 			{
+				"name": "issue",
+				"type": "tuple",
+				"internalType": "struct DecentralizedIssueTracker.Issue",
 				"components": [
 					{
-						"internalType": "address",
+						"name": "id",
+						"type": "uint256",
+						"internalType": "uint256"
+					},
+					{
 						"name": "creator",
-						"type": "address"
+						"type": "address",
+						"internalType": "address"
 					},
 					{
-						"internalType": "address",
-						"name": "assignedTo",
-						"type": "address"
+						"name": "githubIssueUrl",
+						"type": "string",
+						"internalType": "string"
 					},
 					{
-						"internalType": "uint256",
+						"name": "description",
+						"type": "string",
+						"internalType": "string"
+					},
+					{
 						"name": "bounty",
-						"type": "uint256"
+						"type": "uint256",
+						"internalType": "uint256"
 					},
 					{
-						"internalType": "uint256",
-						"name": "createdAt",
-						"type": "uint256"
+						"name": "assignedTo",
+						"type": "address",
+						"internalType": "address"
 					},
 					{
-						"internalType": "uint256",
-						"name": "deadline",
-						"type": "uint256"
-					},
-					{
-						"internalType": "enum SimpleIssueTracker.Difficulty",
-						"name": "difficulty",
-						"type": "uint8"
-					},
-					{
-						"internalType": "bool",
 						"name": "isCompleted",
-						"type": "bool"
+						"type": "bool",
+						"internalType": "bool"
+					},
+					{
+						"name": "percentageCompleted",
+						"type": "uint256",
+						"internalType": "uint256"
+					},
+					{
+						"name": "claimedPercentage",
+						"type": "uint256",
+						"internalType": "uint256"
+					},
+					{
+						"name": "isUnderReview",
+						"type": "bool",
+						"internalType": "bool"
+					},
+					{
+						"name": "createdAt",
+						"type": "uint256",
+						"internalType": "uint256"
+					},
+					{
+						"name": "difficulty",
+						"type": "uint8",
+						"internalType": "enum DecentralizedIssueTracker.Difficulty"
+					},
+					{
+						"name": "deadline",
+						"type": "uint256",
+						"internalType": "uint256"
+					},
+					{
+						"name": "easyDuration",
+						"type": "uint256",
+						"internalType": "uint256"
+					},
+					{
+						"name": "mediumDuration",
+						"type": "uint256",
+						"internalType": "uint256"
+					},
+					{
+						"name": "hardDuration",
+						"type": "uint256",
+						"internalType": "uint256"
+					},
+					{
+						"name": "presentHackerConfidenceScore",
+						"type": "uint256",
+						"internalType": "uint256"
+					},
+					{
+						"name": "minimumBountyCompletionPercentageForStakeReturn",
+						"type": "uint256",
+						"internalType": "uint256"
 					}
-				],
-				"internalType": "struct SimpleIssueTracker.Issue",
-				"name": "",
-				"type": "tuple"
+				]
 			}
 		],
-		"stateMutability": "view",
-		"type": "function"
+		"stateMutability": "view"
 	},
 	{
+		"type": "function",
+		"name": "getIssuePreviousContributors",
 		"inputs": [
 			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			},
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
+				"name": "_issueId",
+				"type": "uint256",
+				"internalType": "uint256"
 			}
 		],
-		"name": "hasAttemptedIssue",
 		"outputs": [
 			{
-				"internalType": "bool",
 				"name": "",
-				"type": "bool"
+				"type": "address[]",
+				"internalType": "address[]"
 			}
 		],
-		"stateMutability": "view",
-		"type": "function"
+		"stateMutability": "view"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "issues",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "creator",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "assignedTo",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "bounty",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "createdAt",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "deadline",
-				"type": "uint256"
-			},
-			{
-				"internalType": "enum SimpleIssueTracker.Difficulty",
-				"name": "difficulty",
-				"type": "uint8"
-			},
-			{
-				"internalType": "bool",
-				"name": "isCompleted",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
+		"type": "function",
+		"name": "getOrganisationIssues",
 		"inputs": [],
-		"name": "nextIssueId",
 		"outputs": [
 			{
-				"internalType": "uint256",
 				"name": "",
-				"type": "uint256"
+				"type": "uint256[]",
+				"internalType": "uint256[]"
 			}
 		],
-		"stateMutability": "view",
-		"type": "function"
+		"stateMutability": "view"
+	},
+	{
+		"type": "function",
+		"name": "gradeIssueByAI",
+		"inputs": [
+			{
+				"name": "_issueId",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "_confidenceScore",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"outputs": [],
+		"stateMutability": "nonpayable"
+	},
+	{
+		"type": "function",
+		"name": "hasAttemptedIssue",
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "",
+				"type": "address",
+				"internalType": "address"
+			}
+		],
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool",
+				"internalType": "bool"
+			}
+		],
+		"stateMutability": "view"
+	},
+	{
+		"type": "function",
+		"name": "hasContributorAttemptedIssue",
+		"inputs": [
+			{
+				"name": "_issueId",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "_contributor",
+				"type": "address",
+				"internalType": "address"
+			}
+		],
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool",
+				"internalType": "bool"
+			}
+		],
+		"stateMutability": "view"
+	},
+	{
+		"type": "function",
+		"name": "increaseBounty",
+		"inputs": [
+			{
+				"name": "_issueId",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"outputs": [],
+		"stateMutability": "payable"
+	},
+	{
+		"type": "function",
+		"name": "increaseIssueDeadline",
+		"inputs": [
+			{
+				"name": "_issueId",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "_time",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"outputs": [],
+		"stateMutability": "nonpayable"
+	},
+	{
+		"type": "function",
+		"name": "increaseIssueDifficulty",
+		"inputs": [
+			{
+				"name": "_issueId",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "_difficulty",
+				"type": "uint8",
+				"internalType": "enum DecentralizedIssueTracker.Difficulty"
+			}
+		],
+		"outputs": [],
+		"stateMutability": "nonpayable"
+	},
+	{
+		"type": "function",
+		"name": "isAddressVerified",
+		"inputs": [
+			{
+				"name": "_user",
+				"type": "address",
+				"internalType": "address"
+			}
+		],
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool",
+				"internalType": "bool"
+			}
+		],
+		"stateMutability": "view"
+	},
+	{
+		"type": "function",
+		"name": "isIssueExpired",
+		"inputs": [
+			{
+				"name": "_issueId",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool",
+				"internalType": "bool"
+			}
+		],
+		"stateMutability": "view"
+	},
+	{
+		"type": "function",
+		"name": "issuePreviousContributors",
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"outputs": [
+			{
+				"name": "",
+				"type": "address",
+				"internalType": "address"
+			}
+		],
+		"stateMutability": "view"
+	},
+	{
+		"type": "function",
+		"name": "issueToUserWithdrawAmountLeft",
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "",
+				"type": "address",
+				"internalType": "address"
+			}
+		],
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"stateMutability": "view"
+	},
+	{
+		"type": "function",
+		"name": "issues",
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"outputs": [
+			{
+				"name": "id",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "creator",
+				"type": "address",
+				"internalType": "address"
+			},
+			{
+				"name": "githubIssueUrl",
+				"type": "string",
+				"internalType": "string"
+			},
+			{
+				"name": "description",
+				"type": "string",
+				"internalType": "string"
+			},
+			{
+				"name": "bounty",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "assignedTo",
+				"type": "address",
+				"internalType": "address"
+			},
+			{
+				"name": "isCompleted",
+				"type": "bool",
+				"internalType": "bool"
+			},
+			{
+				"name": "percentageCompleted",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "claimedPercentage",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "isUnderReview",
+				"type": "bool",
+				"internalType": "bool"
+			},
+			{
+				"name": "createdAt",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "difficulty",
+				"type": "uint8",
+				"internalType": "enum DecentralizedIssueTracker.Difficulty"
+			},
+			{
+				"name": "deadline",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "easyDuration",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "mediumDuration",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "hardDuration",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "presentHackerConfidenceScore",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "minimumBountyCompletionPercentageForStakeReturn",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"stateMutability": "view"
+	},
+	{
+		"type": "function",
+		"name": "nextIssueId",
+		"inputs": [],
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"stateMutability": "view"
+	},
+	{
+		"type": "function",
+		"name": "nullifierToAddress",
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"outputs": [
+			{
+				"name": "",
+				"type": "address",
+				"internalType": "address"
+			}
+		],
+		"stateMutability": "view"
+	},
+	{
+		"type": "function",
+		"name": "paused",
+		"inputs": [],
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool",
+				"internalType": "bool"
+			}
+		],
+		"stateMutability": "view"
+	},
+	{
+		"type": "function",
+		"name": "storeNullifier",
+		"inputs": [
+			{
+				"name": "_nullifier",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"outputs": [],
+		"stateMutability": "nonpayable"
+	},
+	{
+		"type": "function",
+		"name": "submitIssuePercentageClaim",
+		"inputs": [
+			{
+				"name": "_issueId",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "_claimedPercentage",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"outputs": [],
+		"stateMutability": "nonpayable"
+	},
+	{
+		"type": "function",
+		"name": "submitIssuePercentageClaimResponse",
+		"inputs": [
+			{
+				"name": "_issueId",
+				"type": "uint256",
+				"internalType": "uint256"
+			},
+			{
+				"name": "_isAccepted",
+				"type": "bool",
+				"internalType": "bool"
+			}
+		],
+		"outputs": [],
+		"stateMutability": "nonpayable"
+	},
+	{
+		"type": "function",
+		"name": "takeIssue",
+		"inputs": [
+			{
+				"name": "_issueId",
+				"type": "uint256",
+				"internalType": "uint256"
+			}
+		],
+		"outputs": [],
+		"stateMutability": "payable"
+	},
+	{
+		"type": "event",
+		"name": "AIPaymentSent",
+		"inputs": [
+			{
+				"name": "from",
+				"type": "address",
+				"indexed": true,
+				"internalType": "address"
+			},
+			{
+				"name": "amount",
+				"type": "uint256",
+				"indexed": false,
+				"internalType": "uint256"
+			}
+		],
+		"anonymous": false
+	},
+	{
+		"type": "event",
+		"name": "BountyIncreased",
+		"inputs": [
+			{
+				"name": "issueId",
+				"type": "uint256",
+				"indexed": true,
+				"internalType": "uint256"
+			},
+			{
+				"name": "newBounty",
+				"type": "uint256",
+				"indexed": false,
+				"internalType": "uint256"
+			}
+		],
+		"anonymous": false
+	},
+	{
+		"type": "event",
+		"name": "DeadlineExpired",
+		"inputs": [
+			{
+				"name": "issueId",
+				"type": "uint256",
+				"indexed": true,
+				"internalType": "uint256"
+			},
+			{
+				"name": "contributor",
+				"type": "address",
+				"indexed": true,
+				"internalType": "address"
+			}
+		],
+		"anonymous": false
+	},
+	{
+		"type": "event",
+		"name": "IssueAssigned",
+		"inputs": [
+			{
+				"name": "issueId",
+				"type": "uint256",
+				"indexed": true,
+				"internalType": "uint256"
+			},
+			{
+				"name": "contributor",
+				"type": "address",
+				"indexed": true,
+				"internalType": "address"
+			},
+			{
+				"name": "deadline",
+				"type": "uint256",
+				"indexed": false,
+				"internalType": "uint256"
+			}
+		],
+		"anonymous": false
+	},
+	{
+		"type": "event",
+		"name": "IssueCompleted",
+		"inputs": [
+			{
+				"name": "issueId",
+				"type": "uint256",
+				"indexed": true,
+				"internalType": "uint256"
+			},
+			{
+				"name": "contributor",
+				"type": "address",
+				"indexed": true,
+				"internalType": "address"
+			},
+			{
+				"name": "reward",
+				"type": "uint256",
+				"indexed": false,
+				"internalType": "uint256"
+			}
+		],
+		"anonymous": false
+	},
+	{
+		"type": "event",
+		"name": "IssueCreated",
+		"inputs": [
+			{
+				"name": "issueId",
+				"type": "uint256",
+				"indexed": true,
+				"internalType": "uint256"
+			},
+			{
+				"name": "creator",
+				"type": "address",
+				"indexed": true,
+				"internalType": "address"
+			},
+			{
+				"name": "githubIssueUrl",
+				"type": "string",
+				"indexed": false,
+				"internalType": "string"
+			},
+			{
+				"name": "bounty",
+				"type": "uint256",
+				"indexed": false,
+				"internalType": "uint256"
+			},
+			{
+				"name": "difficulty",
+				"type": "uint8",
+				"indexed": false,
+				"internalType": "enum DecentralizedIssueTracker.Difficulty"
+			}
+		],
+		"anonymous": false
+	},
+	{
+		"type": "event",
+		"name": "Paused",
+		"inputs": [
+			{
+				"name": "account",
+				"type": "address",
+				"indexed": false,
+				"internalType": "address"
+			}
+		],
+		"anonymous": false
+	},
+	{
+		"type": "event",
+		"name": "StakeForfeited",
+		"inputs": [
+			{
+				"name": "issueId",
+				"type": "uint256",
+				"indexed": true,
+				"internalType": "uint256"
+			},
+			{
+				"name": "contributor",
+				"type": "address",
+				"indexed": true,
+				"internalType": "address"
+			},
+			{
+				"name": "amount",
+				"type": "uint256",
+				"indexed": false,
+				"internalType": "uint256"
+			}
+		],
+		"anonymous": false
+	},
+	{
+		"type": "event",
+		"name": "Unpaused",
+		"inputs": [
+			{
+				"name": "account",
+				"type": "address",
+				"indexed": false,
+				"internalType": "address"
+			}
+		],
+		"anonymous": false
+	},
+	{
+		"type": "error",
+		"name": "EnforcedPause",
+		"inputs": []
+	},
+	{
+		"type": "error",
+		"name": "ExpectedPause",
+		"inputs": []
+	},
+	{
+		"type": "error",
+		"name": "ReentrancyGuardReentrantCall",
+		"inputs": []
 	}
 ] as const;

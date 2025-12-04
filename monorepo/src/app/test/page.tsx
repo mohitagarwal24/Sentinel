@@ -5,11 +5,11 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadCont
 import { parseEther, formatEther } from 'viem';
 import { Button } from '@/components/ui/button';
 import { CONTRACT_ABI } from '@/app/config/abi';
-import { 
-  AlertCircle, 
-  CheckCircle2, 
-  Loader2, 
-  ExternalLink, 
+import {
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  ExternalLink,
   Terminal,
   Play,
   Trash2,
@@ -45,11 +45,11 @@ interface TestFormData {
 export default function TestPage() {
   const { address, isConnected } = useAccount();
   const { writeContract, data: hash, isPending, error } = useWriteContract();
-  
+
   // Transaction states
-  const { 
-    isLoading: isTransactionLoading, 
-    isSuccess: isTransactionSuccess 
+  const {
+    isLoading: isTransactionLoading,
+    isSuccess: isTransactionSuccess
   } = useWaitForTransactionReceipt({
     hash,
   });
@@ -78,19 +78,19 @@ export default function TestPage() {
   };
 
   // Test Function 1: CREATE ISSUE
-    const testCreateIssue = async () => {
+  const testCreateIssue = async () => {
     if (!isConnected || !address) {
       addLog('⚠️ Please connect your wallet first');
       return;
     }
-    
+
     setActiveTest('createIssue');
     addLog(`Starting CREATE ISSUE test...`);
     addLog(`Connected: ${address}`);
-    
+
     try {
       const bountyInWei = parseEther(formData.bountyAmount);
-      
+
       // Log all form data (for testing purposes)
       addLog(`📋 Form Data:`);
       addLog(`  - GitHub URL: ${formData.githubUrl || 'None'}`);
@@ -99,18 +99,27 @@ export default function TestPage() {
       addLog(`  - Difficulty: ${Object.keys(Difficulty)[formData.difficulty]}`);
       addLog(`  - Durations: Easy(${formData.easyDuration}d), Medium(${formData.mediumDuration}d), Hard(${formData.hardDuration}d)`);
       addLog(`  - Completion %: ${formData.completionPercentage}%`);
-      
-      
+
+
       writeContract({
         address: CONTRACT_ADDRESS,
         abi: CONTRACT_ABI,
         functionName: 'createIssue',
-        args: [formData.difficulty],
+        args: [
+          formData.githubUrl || "https://github.com/test/repo/issues/1",
+          formData.description || "Test issue created via Sentinel platform",
+          formData.difficulty,
+          BigInt(formData.easyDuration),
+          BigInt(formData.mediumDuration),
+          BigInt(formData.hardDuration),
+          BigInt(formData.completionPercentage)
+        ],
         value: bountyInWei,
+        gas: BigInt(3000000), // Set reasonable gas limit (3M gas)
       });
-      
+
       addLog('✅ Create issue transaction submitted!');
-      
+
     } catch (error) {
       addLog(`❌ CREATE ISSUE failed: ${error}`);
       console.error('Create issue error:', error);
@@ -133,10 +142,10 @@ export default function TestPage() {
       addLog('⚠️ Please enter an Issue ID');
       return;
     }
-    
+
     setActiveTest('getIssue');
     addLog(`Getting issue #${issueId}...`);
-    
+
     try {
       const result = await refetchIssue();
       if (result.data) {
@@ -163,14 +172,14 @@ export default function TestPage() {
   // Test Function 3: TAKE ISSUE
   const testTakeIssue = async () => {
     if (!isConnected || !issueId) return;
-    
+
     setActiveTest('takeIssue');
     addLog(`Taking issue #${issueId}...`);
-    
+
     try {
       // Calculate stake amount (for example, require some ETH as stake)
       const stakeAmount = parseEther('0.01'); // 0.01 ETH stake
-      
+
       writeContract({
         address: CONTRACT_ADDRESS,
         abi: CONTRACT_ABI,
@@ -178,20 +187,20 @@ export default function TestPage() {
         args: [BigInt(issueId)],
         value: stakeAmount,
       });
-      
+
       addLog('✅ Take issue transaction submitted!');
-      
+
     } catch (error) {
       addLog(`❌ TAKE ISSUE failed: ${error}`);
       console.error('Take issue error:', error);
     }
   };
 
-  // Test Function 4: GET ALL ISSUES (using simplified ABI)
+  // Test Function 4: GET ORGANISATION ISSUES (using available ABI function)
   const { refetch: refetchAllIssues } = useReadContract({
     address: CONTRACT_ADDRESS,
     abi: CONTRACT_ABI,
-    functionName: 'getAllIssues',
+    functionName: 'getOrganisationIssues',
     query: {
       enabled: false,
     }
@@ -199,38 +208,33 @@ export default function TestPage() {
 
   const testGetAllIssues = async () => {
     setActiveTest('getAllIssues');
-    addLog('Getting all issues...');
-    
+    addLog('Getting organisation issues...');
+
     try {
       const result = await refetchAllIssues();
       if (result.data) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const issues = result.data as any[];
-        addLog(`✅ Found ${issues.length} total issues:`);
-        
-        if (issues.length === 0) {
+        const issueIds = result.data as any[];
+        addLog(`✅ Found ${issueIds.length} total issue IDs:`);
+
+        if (issueIds.length === 0) {
           addLog('📋 No issues found. Create one first!');
           return;
         }
-        
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        issues.forEach((issue: any, index: number) => {
-          addLog(`Issue #${index}:`);
-          addLog(`  - Bounty: ${formatEther(issue.bounty)} ETH`);
-          addLog(`  - Creator: ${issue.creator}`);
-          addLog(`  - Status: ${issue.isCompleted ? 'Completed' : 'Open'}`);
-          addLog(`  - Assigned To: ${(issue.assignedTo !== '0x0000000000000000000000000000000000000000') ? issue.assignedTo : 'Unassigned'}`);
-          addLog(`  - Difficulty: ${Object.keys(Difficulty)[issue.difficulty]} (${issue.difficulty})`);
-          addLog(`  - Created: ${new Date(Number(issue.createdAt) * 1000).toLocaleString()}`);
-          addLog(`  - Deadline: ${new Date(Number(issue.deadline) * 1000).toLocaleString()}`);
-          addLog('---');
+
+        // For each issue ID, we would need to call getIssueInfo to get details
+        // For now, just show the IDs
+        issueIds.forEach((issueId: any, index: number) => {
+          addLog(`Issue ID #${index}: ${issueId.toString()}`);
         });
+
+        addLog('💡 Use "GET ISSUE" with these IDs to see full details');
       } else {
         addLog('❌ No data returned from contract');
       }
     } catch (error) {
-      addLog(`❌ GET ALL ISSUES failed: ${error}`);
-      console.error('Get all issues error:', error);
+      addLog(`❌ GET ORGANISATION ISSUES failed: ${error}`);
+      console.error('Get organisation issues error:', error);
     }
   };
 
@@ -327,8 +331,8 @@ export default function TestPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-green-400 text-sm font-medium block mb-2">Bounty Amount (ETH)</label>
-                    <input 
-                      type="number" 
+                    <input
+                      type="number"
                       step="0.01"
                       value={formData.bountyAmount}
                       onChange={(e) => updateFormData('bountyAmount', e.target.value)}
@@ -338,8 +342,8 @@ export default function TestPage() {
                   </div>
                   <div>
                     <label className="text-green-400 text-sm font-medium block mb-2">Difficulty</label>
-                    <select 
-                      value={formData.difficulty} 
+                    <select
+                      value={formData.difficulty}
                       onChange={(e) => updateFormData('difficulty', parseInt(e.target.value))}
                       className="w-full px-3 py-2 bg-black border border-green-400 text-green-400 rounded focus:outline-none focus:border-green-300"
                     >
@@ -353,7 +357,7 @@ export default function TestPage() {
                 {/* Additional Form Fields (for testing/UI purposes) */}
                 <div>
                   <label className="text-green-400 text-sm font-medium block mb-2">GitHub Issue URL</label>
-                  <input 
+                  <input
                     type="text"
                     value={formData.githubUrl}
                     onChange={(e) => updateFormData('githubUrl', e.target.value)}
@@ -364,7 +368,7 @@ export default function TestPage() {
 
                 <div>
                   <label className="text-green-400 text-sm font-medium block mb-2">Description</label>
-                  <textarea 
+                  <textarea
                     value={formData.description}
                     onChange={(e) => updateFormData('description', e.target.value)}
                     rows={3}
@@ -376,9 +380,9 @@ export default function TestPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-green-400 text-sm font-medium block mb-2">Completion % Required</label>
-                    <input 
-                      type="number" 
-                      min="1" 
+                    <input
+                      type="number"
+                      min="1"
                       max="100"
                       value={formData.completionPercentage}
                       onChange={(e) => updateFormData('completionPercentage', parseInt(e.target.value))}
@@ -391,8 +395,8 @@ export default function TestPage() {
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="text-green-400 text-sm font-medium block mb-2">Easy Duration (days)</label>
-                    <input 
-                      type="number" 
+                    <input
+                      type="number"
                       min="1"
                       value={formData.easyDuration}
                       onChange={(e) => updateFormData('easyDuration', parseInt(e.target.value))}
@@ -402,8 +406,8 @@ export default function TestPage() {
                   </div>
                   <div>
                     <label className="text-green-400 text-sm font-medium block mb-2">Medium Duration (days)</label>
-                    <input 
-                      type="number" 
+                    <input
+                      type="number"
                       min="1"
                       value={formData.mediumDuration}
                       onChange={(e) => updateFormData('mediumDuration', parseInt(e.target.value))}
@@ -413,8 +417,8 @@ export default function TestPage() {
                   </div>
                   <div>
                     <label className="text-green-400 text-sm font-medium block mb-2">Hard Duration (days)</label>
-                    <input 
-                      type="number" 
+                    <input
+                      type="number"
                       min="1"
                       value={formData.hardDuration}
                       onChange={(e) => updateFormData('hardDuration', parseInt(e.target.value))}
@@ -424,14 +428,14 @@ export default function TestPage() {
                   </div>
                 </div>
 
-                
 
-                <Button 
+
+                <Button
                   onClick={testCreateIssue}
                   disabled={isPending || isTransactionLoading || activeTest === 'createIssue'}
                   className="w-full bg-green-600 hover:bg-green-700 text-black font-mono font-bold py-3"
                 >
-                  {(isPending || isTransactionLoading || activeTest === 'createIssue') && 
+                  {(isPending || isTransactionLoading || activeTest === 'createIssue') &&
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   }
                   <Play className="w-4 h-4 mr-2" />
@@ -454,8 +458,8 @@ export default function TestPage() {
               <div className="p-6 space-y-4">
                 <div>
                   <label className="text-green-400 text-sm font-medium block mb-2">Issue ID</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={issueId}
                     onChange={(e) => setIssueId(e.target.value)}
                     placeholder="Enter issue ID (0, 1, 2...)"
@@ -464,7 +468,7 @@ export default function TestPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <Button 
+                  <Button
                     onClick={testGetIssue}
                     disabled={activeTest === 'getIssue'}
                     className="bg-blue-600 hover:bg-blue-700 text-white font-mono py-3"
@@ -473,13 +477,13 @@ export default function TestPage() {
                     <Eye className="w-4 h-4 mr-2" />
                     GET ISSUE
                   </Button>
-                  
-                  <Button 
+
+                  <Button
                     onClick={testTakeIssue}
                     disabled={isPending || isTransactionLoading || activeTest === 'takeIssue'}
                     className="bg-yellow-600 hover:bg-yellow-700 text-black font-mono py-3"
                   >
-                    {(isPending || isTransactionLoading || activeTest === 'takeIssue') && 
+                    {(isPending || isTransactionLoading || activeTest === 'takeIssue') &&
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     }
                     <Zap className="w-4 h-4 mr-2" />
@@ -487,14 +491,14 @@ export default function TestPage() {
                   </Button>
                 </div>
 
-                <Button 
+                <Button
                   onClick={testGetAllIssues}
                   disabled={activeTest === 'getAllIssues'}
                   className="w-full bg-purple-600 hover:bg-purple-700 text-white font-mono py-3"
                 >
                   {activeTest === 'getAllIssues' && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   <Search className="w-4 h-4 mr-2" />
-                  GET ALL ISSUES
+                  GET ORGANISATION ISSUES
                 </Button>
               </div>
             </div>
@@ -514,7 +518,7 @@ export default function TestPage() {
               </div>
             )}
 
-            
+
 
             {error && (
               <div className="border border-red-400 bg-red-900/20 p-4 rounded-lg">
@@ -531,7 +535,7 @@ export default function TestPage() {
             <div className="bg-gray-900 border-green-400 border-2 rounded-lg">
               <div className="flex items-center justify-between p-6 border-b border-green-400">
                 <h3 className="text-green-400 font-mono text-lg font-semibold">EXECUTION LOGS</h3>
-                <Button 
+                <Button
                   onClick={clearLogs}
                   className="bg-gray-700 hover:bg-gray-600 text-green-400 border border-green-400 px-3 py-1 text-sm"
                 >

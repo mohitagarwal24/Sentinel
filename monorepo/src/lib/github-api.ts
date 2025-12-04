@@ -77,7 +77,7 @@ export interface CreateIssueParams {
 }
 
 export class GitHubAPI {
-  constructor(private accessToken: string) {}
+  constructor(private accessToken: string) { }
 
   // Get authenticated user's repositories
   async getUserRepos(options: {
@@ -127,16 +127,16 @@ export class GitHubAPI {
         const collabRepos = await collabResponse.json();
         // Filter for repositories with push access
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const writableCollabRepos = collabRepos.filter((repo: any) => 
+        const writableCollabRepos = collabRepos.filter((repo: any) =>
           repo.permissions && repo.permissions.push
         );
-        
+
         // Combine and deduplicate
         const allRepos = [...ownedRepos, ...writableCollabRepos];
-        const uniqueRepos = allRepos.filter((repo, index, self) => 
+        const uniqueRepos = allRepos.filter((repo, index, self) =>
           index === self.findIndex(r => r.id === repo.id)
         );
-        
+
         return uniqueRepos;
       }
     } catch (error) {
@@ -190,7 +190,7 @@ export class GitHubAPI {
     const cleanedIssueData = {
       title: (issueData.title || '').trim(),
       body: (issueData.body || '').trim(),
-      labels: Array.isArray(issueData.labels) ? 
+      labels: Array.isArray(issueData.labels) ?
         [...new Set(issueData.labels)] // Remove duplicates
           .filter(label => label && typeof label === 'string' && label.trim())
           .map(label => label.trim())
@@ -242,7 +242,7 @@ export class GitHubAPI {
         url: `https://api.github.com/repos/${owner}/${repo}/issues`,
         requestBody: cleanedIssueData
       });
-      
+
       if (response.status === 404) {
         throw new Error(`Repository ${owner}/${repo} not found or you don't have access to create issues. Make sure the repository exists and you have write permissions.`);
       } else if (response.status === 403) {
@@ -250,7 +250,7 @@ export class GitHubAPI {
       } else if (response.status === 422) {
         console.log('Detailed validation error:', error);
         let validationErrors = 'Validation failed';
-        
+
         if (error.errors && Array.isArray(error.errors)) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           validationErrors = error.errors.map((e: any) => {
@@ -265,7 +265,7 @@ export class GitHubAPI {
         } else if (error.message) {
           validationErrors = error.message;
         }
-        
+
         throw new Error(`Issue creation failed: ${validationErrors}`);
       } else {
         throw new Error(`Failed to create issue: ${error.message || response.statusText} (${response.status})`);
@@ -329,7 +329,7 @@ export class GitHubAPI {
   }
 
   // Get repository labels
-  async getRepoLabels(owner: string, repo: string): Promise<Array<{name: string, color: string, description: string}>> {
+  async getRepoLabels(owner: string, repo: string): Promise<Array<{ name: string, color: string, description: string }>> {
     const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/labels`, {
       headers: {
         'Authorization': `Bearer ${this.accessToken}`,
@@ -350,7 +350,7 @@ export class GitHubAPI {
     order?: 'desc' | 'asc';
     per_page?: number;
     page?: number;
-  } = {}): Promise<{total_count: number, items: GitHubIssue[]}> {
+  } = {}): Promise<{ total_count: number, items: GitHubIssue[] }> {
     const params = new URLSearchParams({
       q: query,
       sort: options.sort || 'updated',
@@ -378,7 +378,7 @@ export class GitHubAPI {
 export const getDifficultyFromLabels = (labels: GitHubIssue['labels']) => {
   const diffLabel = labels.find(label => label.name.toLowerCase().includes('difficulty'));
   if (!diffLabel) return 0; // Default to EASY
-  
+
   const labelName = diffLabel.name.toLowerCase();
   if (labelName.includes('easy')) return 0;
   if (labelName.includes('medium')) return 1;
@@ -396,7 +396,7 @@ export const formatGitHubDate = (dateString: string) => {
   });
 };
 
-export const getRepoFromUrl = (url: string): {owner: string, repo: string} | null => {
+export const getRepoFromUrl = (url: string): { owner: string, repo: string } | null => {
   const match = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
   if (match) {
     return { owner: match[1], repo: match[2] };
@@ -410,7 +410,7 @@ export const createDifficultyLabels = async (accessToken: string, owner: string,
     { name: 'difficulty:medium', color: '7CC0FF', description: 'Feature implementations, moderate complexity' },
     { name: 'difficulty:hard', color: 'FF9A51', description: 'Complex features, architectural changes' },
     { name: 'bounty', color: 'FCFF52', description: 'Issue has blockchain bounty attached' },
-    { name: 'secgit', color: 'B490FF', description: 'Managed by SecGIT platform' }
+    { name: 'Sentinel', color: 'B490FF', description: 'Managed by Sentinel platform' }
   ];
 
   // First, check which labels already exist

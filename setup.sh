@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Setting up SecGIT project..."
+echo "🚀 Setting up Sentinel project..."
 
 # Check if Python virtual environment exists
 if [ ! -d "venv" ]; then

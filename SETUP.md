@@ -1,4 +1,4 @@
-# SecGIT Local Setup Guide
+# Sentinel Local Setup Guide
 
 ## Prerequisites
 
@@ -134,6 +134,6 @@ If you encounter issues with Python packages, ensure you're using Python 3.8+ an
 
 ## Additional Resources
 
-- **Documentation**: https://ironjams-organization.gitbook.io/secgitv0
+- **Documentation**: https://ironjams-organization.gitbook.io/Sentinelv0
 - **Demo Video**: https://www.youtube.com/watch?v=BJkFdprHhmY
 - **Contract**: Polkadot Asset Hub Paseo Testnet - 0x0156962e58CA27B884a0ea120c184b2355A83D50

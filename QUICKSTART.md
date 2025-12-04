@@ -1,7 +1,7 @@
-# 🚀 SecGIT Quick Start
+# 🚀 Sentinel Quick Start
 
-## What is SecGIT?
-SecGIT is a blockchain-backed platform for **trustless, fair, and secure** open-source collaboration using:
+## What is Sentinel?
+Sentinel is a blockchain-backed platform for **trustless, fair, and secure** open-source collaboration using:
 - **Two-sided staking protocol** (owners + contributors)
 - **Verifiable AI agents** for code review
 - **Polkadot zk-based identity verification**
@@ -43,7 +43,7 @@ npm run dev
 | WalletConnect | https://cloud.walletconnect.com/ | `monorepo/.env.local` |
 
 ## 📚 Resources
-- **Docs:** https://ironjams-organization.gitbook.io/secgitv0
+- **Docs:** https://ironjams-organization.gitbook.io/Sentinelv0
 - **Demo:** https://www.youtube.com/watch?v=BJkFdprHhmY
 - **Contract:** 0x0156962e58CA27B884a0ea120c184b2355A83D50 (Polkadot Paseo)
 

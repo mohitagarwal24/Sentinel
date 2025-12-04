@@ -1027,7 +1027,10 @@ def main():
         print("🚀 Enhanced ASI:One Repository Analyzer with Agentverse Integration")
         print("This tool discovers AI agents from marketplace and uses them to analyze repositories")
         print("-" * 80)
-        print(f"🤖 Your AI Identity: {analyzer.ai_identity.address}")
+        if analyzer.ai_identity:
+            print(f"🤖 Your AI Identity: {analyzer.ai_identity.address}")
+        else:
+            print("🤖 Running in simplified mode (no AI identity)")
         print("-" * 80)
         
         while True:
@@ -1051,12 +1054,29 @@ def main():
                 if result['success']:
                     print(f"\n🎉 Analysis complete!")
                     print(f"Repository: {result['repository']}")
-                    print(f"Agents discovered: {result['agents_discovered']}")
-                    print(f"Agents used: {result['agents_used']}")
-                    print(f"Selected agents: {', '.join(result['selected_agents'])}")
-                    print(f"Issue created: #{result['issue']['number']} - {result['issue']['title']}")
-                    print(f"Difficulty: {result['issue']['difficulty']} | Priority: {result['issue']['priority']}")
-                    print(f"URL: {result['issue']['url']}")
+                    
+                    # Handle different result structures
+                    if 'agents_discovered' in result:
+                        print(f"Agents discovered: {result['agents_discovered']}")
+                    if 'agents_used' in result:
+                        print(f"Agents used: {result['agents_used']}")
+                    if 'selected_agents' in result:
+                        print(f"Selected agents: {', '.join(result['selected_agents'])}")
+                    
+                    # Display synthesized analysis details
+                    if 'synthesized_analysis' in result:
+                        analysis = result['synthesized_analysis']
+                        print(f"Suggested Feature: {analysis.get('title', 'N/A')}")
+                        print(f"Difficulty: {analysis.get('difficulty', 'N/A')} | Priority: {analysis.get('priority', 'N/A')}")
+                        print(f"Implementation Estimate: {analysis.get('implementation_estimate', 'N/A')}")
+                        
+                        # Show first few lines of description
+                        body = analysis.get('body', '')
+                        if body:
+                            preview = body.split('\n')[0][:100]
+                            print(f"Description: {preview}{'...' if len(preview) == 100 else ''}")
+                    
+                    print(f"Analysis Method: {result.get('analysis_method', 'Unknown')}")
                 else:
                     print(f"\n  Analysis failed: {result['error']}")
                     
